@@ -1,4 +1,4 @@
-# bvmap-spacegray
+# bvmap-starlight
 
 `bvmap-dark.json`(stars.optgeo.org配信版、無加工)から派生した別スタイル。縦書き注記の棒音符(「ー」)が横倒しに見える問題([UNopenGIS/7#1012](https://github.com/UNopenGIS/7/issues/1012))に対応するため、縦書きレイヤー3件の`text-font`を`["Choonpu"]`に置き換えている。
 
@@ -24,6 +24,6 @@
 
 ## 技術的な背景
 
-- `bvmap-spacegray.json`はルートに`glyphs`(GSIのPBFグリフサーバー)を持つため、`text-font`配列はMapLibreのスタイル仕様上「複数フォント名を`,`で結合した単一フォントスタック名」として解釈される([style-spec #1068](https://github.com/maplibre/maplibre-style-spec/issues/1068))。`["Choonpu", "NotoSerifJP-SemiBold"]`のような並記は「Choonpuがダメなら次を試す」というカスケードにはならない。そのため既存フォントへのグレースフルフォールバックは採用せず、完全置換とした
+- `bvmap-starlight.json`はルートに`glyphs`(GSIのPBFグリフサーバー)を持つため、`text-font`配列はMapLibreのスタイル仕様上「複数フォント名を`,`で結合した単一フォントスタック名」として解釈される([style-spec #1068](https://github.com/maplibre/maplibre-style-spec/issues/1068))。`["Choonpu", "NotoSerifJP-SemiBold"]`のような並記は「Choonpuがダメなら次を試す」というカスケードにはならない。そのため既存フォントへのグレースフルフォールバックは採用せず、完全置換とした
 - ローカルフォント解決には MapLibre GL JS **5.11.0以上**が必要([PR #4564](https://github.com/maplibre/maplibre-gl-js/pull/4564))
 - `Choonpu`は「長音符」のローマ字表記。issue #1012の「棒音符」と同じ対象を指す

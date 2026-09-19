@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>bvmap-spacegray — 縦書き棒音符テスト</title>
+<title>bvmap-starlight — 縦書き棒音符テスト</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.css">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, sans-serif; }
@@ -39,7 +39,7 @@
 
   /* UNopenGIS/7#1012 の回避策本体。
      出典: https://github.com/maplibre/maplibre-gl-js/issues/5259#issuecomment-3510571607
-     bvmap-spacegray.json 側で text-font: ["Choonpu"] を指定している3レイヤー
+     bvmap-starlight.json 側で text-font: ["Choonpu"] を指定している3レイヤー
      (縦書き注記)がこのフォントを解決できるよう、ページ側で用意する。 */
   @font-face {
     font-family: "Choonpu";
@@ -52,7 +52,7 @@
 <div id="map"></div>
 <div class="panel" id="style-panel">
   <button data-style="../style/bvmap-dark.json" aria-pressed="true">bvmap-dark(無加工)</button>
-  <button data-style="../style/bvmap-spacegray.json" aria-pressed="false">bvmap-spacegray(要CSS)</button>
+  <button data-style="../style/bvmap-starlight.json" aria-pressed="false">bvmap-starlight(要CSS)</button>
 </div>
 <script type="module">
 // zukaku (docs/index.html) と同じCDN参照。手元でこのファイルを開いて

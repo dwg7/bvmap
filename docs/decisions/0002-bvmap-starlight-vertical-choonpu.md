@@ -1,4 +1,4 @@
-# 0002: bvmap-spacegray — 縦書き棒音符(ー)ワークアラウンド
+# 0002: bvmap-starlight — 縦書き棒音符(ー)ワークアラウンド
 
 ## 問題
 
@@ -14,8 +14,8 @@
 2. **filterによるレイヤー分岐(「ー」を含む地物だけ新レイヤーへ)は不採用**。実装コストに対して、今回は影響範囲をレイヤー全体に許容する判断とした
 3. **採用**: 対象3レイヤー(`bvmap-注記シンボルなし縦ソート順100以上`、`bvmap-注記角度付き線`、`bvmap-注記シンボルなし縦ソート順100未満`)の`text-font`を`["Choonpu"]`に完全置換。元の`match`式が持っていた主要地名(`NotoSerifJP-SemiBold`)とその他(`NotoSansJP-Regular`)の書体差は、この3レイヤーに限り失われる
 
-## なぜ`bvmap-dark`を直接書き換えず、`bvmap-spacegray`という別名にしたか
+## なぜ`bvmap-dark`を直接書き換えず、別名にしたか
 
-「stars.optgeo.orgに置いてある現行`bvmap-dark.json`の品質を下げないこと」を大前提とする。上記の完全置換はフォント差の喪失というトレードオフを伴い、かつページ側に`@font-face` CSSの追加設定を必須で要求する(未設定環境での挙動は保証されない、[style/bvmap-spacegray.md](../../style/bvmap-spacegray.md)参照)。これは`bvmap-dark`と無条件に互換な変更ではないため、`style/bvmap-dark.json`は無加工のまま保持し、パッチ適用版を`style/bvmap-spacegray.json`という独立した名前の次世代スタイルとして分離した。
+「stars.optgeo.orgに置いてある現行`bvmap-dark.json`の品質を下げないこと」を大前提とする。上記の完全置換はフォント差の喪失というトレードオフを伴い、かつページ側に`@font-face` CSSの追加設定を必須で要求する(未設定環境での挙動は保証されない、[style/bvmap-starlight.md](../../style/bvmap-starlight.md)参照)。これは`bvmap-dark`と無条件に互換な変更ではないため、`style/bvmap-dark.json`は無加工のまま保持し、パッチ適用版を独立した名前の次世代スタイルとして分離した。
 
-`stars.optgeo.org`側で`bvmap-spacegray`をどう配信するか(新規style idとして追加するか等)は、運用影響が大きいため人(藤村さん)の判断に委ねる。
+命名の経緯(`bvmap-spacegray`→`bvmap-starlight`)と、`bvmap-dark`識別子との関係については[0003](0003-bvmap-starlight-naming.md)を参照。

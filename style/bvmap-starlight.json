@@ -27317,6 +27317,6 @@
       "type": "symbol"
     }
   ],
-  "name": "GSI optimized vector tile basemap (bvmap-spacegray), background/roads/labels only, no terrain/hillshade — requires the Choonpu @font-face CSS (see style/bvmap-spacegray.md)",
+  "name": "GSI optimized vector tile basemap (bvmap-starlight), background/roads/labels only, no terrain/hillshade — requires the Choonpu @font-face CSS (see style/bvmap-starlight.md)",
   "version": 8
 }
