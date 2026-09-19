@@ -19885,7 +19885,36 @@
           "vt_text"
         ],
         "text-font": [
-          "Choonpu"
+          "match",
+          [
+            "get",
+            "vt_code"
+          ],
+          [
+            321,
+            322,
+            341,
+            342,
+            344,
+            345,
+            347,
+            820,
+            840,
+            841,
+            842
+          ],
+          [
+            "literal",
+            [
+              "NotoSerifJP-SemiBold"
+            ]
+          ],
+          [
+            "literal",
+            [
+              "NotoSansJP-Regular"
+            ]
+          ]
         ],
         "text-justify": "auto",
         "text-max-width": 100,
@@ -22265,7 +22294,36 @@
           "vt_text"
         ],
         "text-font": [
-          "Choonpu"
+          "match",
+          [
+            "get",
+            "vt_code"
+          ],
+          [
+            321,
+            322,
+            341,
+            342,
+            344,
+            345,
+            347,
+            820,
+            840,
+            841,
+            842
+          ],
+          [
+            "literal",
+            [
+              "NotoSerifJP-SemiBold"
+            ]
+          ],
+          [
+            "literal",
+            [
+              "NotoSansJP-Regular"
+            ]
+          ]
         ],
         "text-justify": "auto",
         "text-max-width": 100,
@@ -25376,7 +25434,36 @@
           "vt_text"
         ],
         "text-font": [
-          "Choonpu"
+          "match",
+          [
+            "get",
+            "vt_code"
+          ],
+          [
+            321,
+            322,
+            341,
+            342,
+            344,
+            345,
+            347,
+            820,
+            840,
+            841,
+            842
+          ],
+          [
+            "literal",
+            [
+              "NotoSerifJP-SemiBold"
+            ]
+          ],
+          [
+            "literal",
+            [
+              "NotoSansJP-Regular"
+            ]
+          ]
         ],
         "text-justify": "auto",
         "text-max-width": 100,
@@ -27317,6 +27404,6 @@
       "type": "symbol"
     }
   ],
-  "name": "GSI optimized vector tile basemap (bvmap-starlight), background/roads/labels only, no terrain/hillshade — requires the Choonpu @font-face CSS (see style/bvmap-starlight.md)",
+  "name": "GSI optimized vector tile basemap (bvmap-starlight), background/roads/labels only, no terrain/hillshade",
   "version": 8
 }

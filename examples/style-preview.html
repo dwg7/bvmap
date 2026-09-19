@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>bvmap-starlight — 縦書き棒音符テスト</title>
+<title>bvmap style preview</title>
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.css">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, sans-serif; }
@@ -36,37 +36,26 @@
     color: #fff;
     border-color: #2b6cb0;
   }
-
-  /* UNopenGIS/7#1012 の回避策本体。
-     出典: https://github.com/maplibre/maplibre-gl-js/issues/5259#issuecomment-3510571607
-     bvmap-starlight.json 側で text-font: ["Choonpu"] を指定している3レイヤー
-     (縦書き注記)がこのフォントを解決できるよう、ページ側で用意する。 */
-  @font-face {
-    font-family: "Choonpu";
-    src: local("Hiragino Mincho ProN"), local("Noto Serif CJK JP"), local("MS Mincho");
-    font-feature-settings: "vert";
-  }
 </style>
 </head>
 <body>
 <div id="map"></div>
 <div class="panel" id="style-panel">
-  <button data-style="../style/bvmap-dark.json" aria-pressed="true">bvmap-dark(無加工)</button>
-  <button data-style="../style/bvmap-starlight.json" aria-pressed="false">bvmap-starlight(要CSS)</button>
+  <button data-style="../style/bvmap-dark.json" aria-pressed="true">bvmap-dark</button>
+  <button data-style="../style/bvmap-starlight.json" aria-pressed="false">bvmap-starlight</button>
 </div>
 <script type="module">
-// zukaku (docs/index.html) と同じCDN参照。手元でこのファイルを開いて
-// CDNからのスクリプト読み込みがブロックされる環境(例: サンドボックス化
-// されたブラウザ)では、examples/vendor/ にローカルへ退避して
-// "./vendor/maplibre-gl.mjs" 等に差し替えるとよい(vendor/はgitignore対象)。
+// zukaku (docs/index.html) と同じCDN参照。CDNからのスクリプト読み込みが
+// ブロックされる環境(例: サンドボックス化されたブラウザ)では、
+// examples/vendor/ にローカルへ退避して "./vendor/maplibre-gl.mjs" 等に
+// 差し替えるとよい(vendor/はgitignore対象)。
 import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.mjs";
 
-  // issue #1012 の再現条件と同じ地点(旭川、縦書き注記に「ー」を含む)
   const map = new MapLibreMap({
     container: "map",
     style: "../style/bvmap-dark.json",
-    center: [142.365, 43.7706],
-    zoom: 15,
+    center: [141.36108, 43.061529], // 札幌
+    zoom: 16,
     hash: true,
   });
   map.addControl(new NavigationControl());
