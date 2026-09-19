@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>real system font test (no @font-face)</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; }
+  #map { position: absolute; inset: 0; }
+  /* Deliberately NO @font-face here — text-font below names real platform
+     fonts directly, relying on Canvas 2D's normal (non-local()) font-family
+     resolution instead of the FontFace-loading API that Chrome/Brave
+     restrict for anti-fingerprinting. */
+</style>
+</head>
+<body>
+<div id="map"></div>
+<script type="module">
+import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.mjs";
+const map = new MapLibreMap({
+  container: "map",
+  style: "fixtures/bvmap-dark-realfont-stack.json",
+  center: [141.36186584830284, 43.06150022998193],
+  zoom: 20,
+  hash: true,
+});
+map.addControl(new NavigationControl());
+window.__map = map;
+</script>
+</body>
+</html>
