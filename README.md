@@ -1,11 +1,12 @@
 # bvmap
 
 [GSI(国土地理院)の最適化ベクトルタイル(optimal_bvmap)](https://github.com/gsi-cyberjapan/optimal_bvmap)を元にした
-MapLibreスタイル、`bvmap`(標準版)と`bvmap-dark`(ダーク版、実際の配色は
-クリーム/アイボリー系の明るい配色)の`style.json`を管理するリポジトリ。
-[stars.optgeo.org](https://stars.optgeo.org)と
-[dwg7/zukaku](https://github.com/dwg7/zukaku)の両方で、このスタイルが
-参照される。
+MapLibreスタイルの**開発ワークスペース**。実際に`stars.optgeo.org`で配信
+されているstyle.jsonのマスターは[`hfu/stars`](https://github.com/hfu/stars)
+(`styles/`ディレクトリ)であり、本リポジトリではない
+([docs/decisions/0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md))。
+本リポジトリは、新しいスタイルバリアント(`bvmap-starlight`)を配色調整・
+検証してから`hfu/stars`へPRする、という開発の場として使う。
 
 なぜ`bvmap-dark`ではなく`bvmap`という名前か: 将来light/dark両方の
 バリアントを管理する可能性を考慮し、対象をdarkだけに限定しない、機能名
@@ -36,6 +37,7 @@ python3 -m http.server 8765
 - [0003: bvmap-starlightという命名](docs/decisions/0003-bvmap-starlight-naming.md)
 - [0004: 縦書き棒音符(ー)ワークアラウンドは機能しない](docs/decisions/0004-vertical-choonpu-workaround-does-not-work.md)
 - [0005: 目標変更](docs/decisions/0005-goal-change-master-repo-and-starlight-polish.md)
+- [0006: hfu/starsが既にマスターリポジトリだった](docs/decisions/0006-hfu-stars-is-already-master-repo.md)
 
 ## License
 
