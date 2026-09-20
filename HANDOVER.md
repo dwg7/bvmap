@@ -38,8 +38,8 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STAR
 ## 未解決のまま保留中の判断
 
 - `font-faces`(自前フォントホスティング)は[0011](docs/decisions/0011-font-implementation-method.md)で保留。将来のMapLibreネイティブ縦書き対応([0004](docs/decisions/0004-vertical-choonpu-workaround-does-not-work.md)のPR #8399等)が`font-faces`前提でマージされたら再検討
-- ジェネレータの入力形式(YAML)の具体的な構文は、まだPythonの辞書リテラルで代用している段階。[0009](docs/decisions/0009-generator-architecture-direction.md)の「まず中身の処理を固めてから入れ物を選ぶ」という順序に従い、意図的に後回しにしている
 - スプライト(独自SDF・絵文字代替)は[0014](docs/decisions/0014-sprite-decisions.md)で全て見送り。着手条件はADR参照
+- **(2026-09-20、`stars`セッションからの共有、未検証・未対応)** `hfu/stars`がglyphを自前配信するようになった(`https://stars.optgeo.org/font/{fontstack}/{range}`、`.pbf`無し、Martinがフォントファイルから生成)。それに伴い`hfu/stars`側の`styles/`ではフォント名が変わった(例: `NotoSansJP-Regular`→`Noto Sans JP Regular`、Martinがフォント内部のファミリ名で命名するため)。**本リポジトリの`style/bvmap-starlight.json`の`glyphs`は今もGSI直参照(`gsi-cyberjapan.github.io/optimal_bvmap/glyphs/...`)のままで、この変更の影響を受けていないことを確認済み**([0007](docs/decisions/0007-real-font-names-bypass-local-restriction.md)の実フォント名直書き方式も無関係)。将来`glyphs`を`stars.optgeo.org`側に切り替える判断をする場合にのみ、フォント名の対応関係を再確認すること
 
 ## セッションの作法(重要、次のセッションも踏襲すること)
 
