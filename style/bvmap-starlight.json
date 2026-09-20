@@ -15621,7 +15621,7 @@
    },
    "minzoom": 11,
    "paint": {
-    "line-color": "rgba(100,100,100,1)",
+    "line-color": "rgba(113,114,116,1)",
     "line-dasharray": [
      5,
      5
@@ -15737,7 +15737,7 @@
    "maxzoom": 17,
    "minzoom": 11,
    "paint": {
-    "line-color": "rgba(100,100,100,1)",
+    "line-color": "rgba(113,114,116,1)",
     "line-dasharray": [
      0.1,
      1
@@ -16418,7 +16418,7 @@
    },
    "minzoom": 17,
    "paint": {
-    "line-color": "rgba(100,100,100,1)",
+    "line-color": "rgba(113,114,116,1)",
     "line-width": [
      "match",
      [
@@ -16449,7 +16449,7 @@
    "id": "bvmap-道路構成線トンネル内の道路",
    "minzoom": 17,
    "paint": {
-    "line-color": "rgba(100,100,100,1)",
+    "line-color": "rgba(113,114,116,1)",
     "line-dasharray": [
      10,
      8
@@ -16472,7 +16472,7 @@
    "id": "bvmap-道路構成線分離帯",
    "minzoom": 17,
    "paint": {
-    "line-color": "rgba(100,100,100,1)",
+    "line-color": "rgba(113,114,116,1)",
     "line-width": 2
    },
    "source": "bvmap",
@@ -16566,7 +16566,7 @@
   {
    "id": "bvmap-特定地区界",
    "paint": {
-    "line-color": "rgba(150,150,150,1)",
+    "line-color": "rgba(158,159,162,1)",
     "line-dasharray": [
      5,
      4
@@ -16661,7 +16661,7 @@
   {
    "id": "bvmap-送電線",
    "paint": {
-    "line-color": "rgba(100,100,100,1)",
+    "line-color": "rgba(113,114,116,1)",
     "line-width": 0.5
    },
    "source": "bvmap",
@@ -16671,7 +16671,7 @@
   {
    "id": "bvmap-送電線破線",
    "paint": {
-    "line-color": "rgba(100,100,100,1)",
+    "line-color": "rgba(113,114,116,1)",
     "line-dasharray": [
      0.5,
      15

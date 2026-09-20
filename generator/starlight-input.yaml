@@ -63,6 +63,7 @@ palette:
   # 方針により独立トークンにした——このクラスタ内(水涯線・水部構造物線・
   # 海岸線・河川中心線・地形表記線)で共有し、Anno側のgray_88とは連動させない。
   gray_88_hydro: "rgba(92,93,95,1)"
+  gray_150: "rgba(158,159,162,1)"  # 特定地区界(0032のGroup C)。他トークンと非衝突
 
 categories:
   building_fill:
@@ -571,3 +572,75 @@ patches:
     color_overrides:
       text-color: gray_88
       text-halo-color: gray_255
+
+  # 以下9層は、旧LITERAL_RANGES(位置ベース選択)にいた層をid参照に
+  # 移した([0032](../docs/decisions/0032-literal-layers-generator-migration-plan.md)/
+  # [0034](../docs/decisions/0034-migration-group-b-d-quick-wins.md)の続き)。
+  # 移行し終えるとLITERAL_RANGESは空になり削除できる——
+  # [0020](../docs/decisions/0020-yaml-wiring-stage1.md)が指摘した
+  # 位置ベース選択の脆弱性(上流の並び替えに弱い)を解消する。
+  - id: bvmap-道路中心線破線
+    base: {source: style/bvmap-dark.json, layer: bvmap-道路中心線破線}
+    literal_reason: "tierブロック外の装飾層(0022/0025)。徒歩道・石段のトンネル状態への破線装飾。単一値、gray_100で足りる。"
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
+
+  - id: bvmap-道路中心線階段
+    base: {source: style/bvmap-dark.json, layer: bvmap-道路中心線階段}
+    literal_reason: "tierブロック外の装飾層(0025)。石段(vt_code 2731-2734)専用。単一値、gray_100で足りる。"
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
+
+  - id: bvmap-道路縁
+    base: {source: style/bvmap-dark.json, layer: bvmap-道路縁}
+    literal_reason: "tierブロック外の装飾層(0022)。z17限定の道路細部。単一値、gray_100で足りる。"
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
+
+  - id: bvmap-道路構成線トンネル内の道路
+    base: {source: style/bvmap-dark.json, layer: bvmap-道路構成線トンネル内の道路}
+    literal_reason: "tierブロック外の装飾層(0022)。z17限定の道路細部。単一値、gray_100で足りる。"
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
+
+  - id: bvmap-道路構成線分離帯
+    base: {source: style/bvmap-dark.json, layer: bvmap-道路構成線分離帯}
+    literal_reason: "tierブロック外の装飾層(0022)。z17限定の道路細部。単一値、gray_100で足りる。"
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
+
+  - id: bvmap-送電線
+    base: {source: style/bvmap-dark.json, layer: bvmap-送電線}
+    literal_reason: "tierブロック外の装飾層(0022)。単一値、gray_100で足りる。"
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
+
+  - id: bvmap-送電線破線
+    base: {source: style/bvmap-dark.json, layer: bvmap-送電線破線}
+    literal_reason: "tierブロック外の装飾層(0022)。単一値、gray_100で足りる。"
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
+
+  - id: bvmap-特定地区界
+    base: {source: style/bvmap-dark.json, layer: bvmap-特定地区界}
+    literal_reason: >
+      面として閉じておらず実質的に地図記号に近い、存在感の薄いレイヤー
+      (セッション内で確認済み、0008参照)。単一値だが他と衝突しない
+      新規トークンgray_150が必要([0033](../docs/decisions/0033-new-token-policy.md))。
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_150
+
+  # Group F(0032)。色を持たない純アイコン層——移行対象ではないが、
+  # bvmap-注記シンボル付き重なりと扱いを揃えるための注釈のみのpatch。
+  - id: bvmap-水部表記線point
+    base: {source: style/bvmap-dark.json, layer: bvmap-水部表記線point}
+    literal_reason: "アイコンのみのシンボルレイヤー(流水方向)。色を持たないため移行対象外。"
+    known_pattern_pending: false
