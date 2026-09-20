@@ -55,16 +55,8 @@ palette:
   # で発見)——だからanno_*ではなくgray_*に付け直した(Anno専用ではないため)。
   gray_88: "rgba(92,93,95,1)"
   gray_161: "rgba(168,169,172,1)"
-  # bvmap-dark.jsonはrgb()とrgba()を同じ意味で混在させている(0022で確認)。
-  # 数値としては上と同じ161/88だが、文字列表現が違うので別トークンにする
-  # (バイト完全一致のゲートを保つため)。
-  gray_161_rgb: "rgb(168,169,172)"
-  gray_88_rgb: "rgb(92,93,95)"
-  # ZL4-10鉄道(0024)のdefault色。gray_100と同じ数値だがrgb()形式。
-  gray_100_rgb: "rgb(113,114,116)"
   # 鉄道トンネル・軌道(0025)。
   gray_113: "rgba(124,126,128,1)"  # 鉄道トンネル本体、地下鉄
-  gray_173_rgb: "rgb(179,180,183)"  # 鉄道トンネル本体、駅部分(gray_173と同値、rgb形式)
   gray_30: "rgba(35,37,39,1)"  # 軌道(RailTrCL)、普通鉄道/特殊鉄道/路面の鉄道
 
 categories:
@@ -124,7 +116,7 @@ categories:
     property: vt_rtcode
     groups:
       subway: {codes: ["地下鉄"], value: gray_161}
-    default: gray_100_rgb
+    default: gray_100
 
   # 鉄道トンネル・ククリ(casing)。本体と違い、defaultは単純な値なので
   # flat_matchでそのまま表現できる(0025)。
@@ -133,7 +125,7 @@ categories:
     property: vt_rtcode
     groups:
       subway: {codes: ["地下鉄"], value: gray_255}
-    default: gray_100_rgb
+    default: gray_100
 
   # 軌道(RailTrCL、0025)。表層/トンネルで暗くなる種別(普通鉄道/特殊鉄道/
   # 路面の鉄道)は完全に一致する——vt_codeの実際の値集合が違うだけ。
@@ -278,8 +270,8 @@ priority_chains:
   rail_tunnel_main_color:
     engine: nested_match
     subway_color: gray_113
-    station_color: gray_173_rgb
-    default_color: gray_100_rgb
+    station_color: gray_173
+    default_color: gray_100
 
   # 注記(Anno)のシンボル付き2層(0017/0027)。共有ランプ(categories.
   # anno_text_color)をbase_categoryとして丸ごと再利用し、ズーム14を境に
@@ -510,19 +502,19 @@ patches:
     base: {source: style/bvmap-dark.json, layer: bvmap-等高線}
     literal_reason: >
       等高線・等深線(0008の順序体系⑦)。line-colorはbvmap-等高線数値部の
-      text-colorと数値として同じ161——0022で発見、gray_161_rgbで統一。
+      text-colorと数値として同じ161——0022で発見、gray_161で統一。
     known_pattern_pending: false
     color_overrides:
-      line-color: gray_161_rgb
+      line-color: gray_161
 
   - id: bvmap-等深線
     base: {source: style/bvmap-dark.json, layer: bvmap-等深線}
     literal_reason: >
       等高線・等深線(0008の順序体系⑦)。line-colorはbvmap-等深線数値部の
-      text-colorと数値として同じ88——0022で発見、gray_88_rgbで統一。
+      text-colorと数値として同じ88——0022で発見、gray_88で統一。
     known_pattern_pending: false
     color_overrides:
-      line-color: gray_88_rgb
+      line-color: gray_88
 
   - id: bvmap-構造物面の外周線
     base: {source: style/bvmap-dark.json, layer: bvmap-構造物面の外周線}

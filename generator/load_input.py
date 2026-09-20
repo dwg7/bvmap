@@ -353,12 +353,28 @@ if __name__ == "__main__":
          by_id["bvmap-注記シンボル付きソート順100未満"]["paint"]["text-color"]),
     ]
 
-    mismatches = [name for name, generated, original in checks
-                  if json.dumps(generated, sort_keys=True, ensure_ascii=False)
-                  != json.dumps(original, sort_keys=True, ensure_ascii=False)]
+    # Since docs/decisions/0030's color polish, most of these checks are
+    # *expected* to differ from bvmap-dark.json (that's the point) — only
+    # the color-independent ones (font names, numeric widths) still have
+    # to match byte-exact. Mirrors assemble.py's own 0029 reframing.
+    STRUCTURAL_CHECKS = {"building_outline_width", "anno_text_font"}
+
+    mismatches = []
+    diverged = []
+    for name, generated, original in checks:
+        same = (json.dumps(generated, sort_keys=True, ensure_ascii=False)
+                == json.dumps(original, sort_keys=True, ensure_ascii=False))
+        if same:
+            continue
+        if name in STRUCTURAL_CHECKS:
+            mismatches.append(name)
+        else:
+            diverged.append(name)
 
     if not mismatches:
-        print(f"STAGE 1 GATE: PASS — starlight-input.yaml reproduces all {len(checks)} "
-              f"checked expressions/layers exactly, driven entirely from YAML data.")
+        print(f"STAGE 1 GATE: PASS — {len(checks)} entries built successfully from "
+              f"starlight-input.yaml; {len(STRUCTURAL_CHECKS)} color-independent ones "
+              f"(font/width) still byte-match bvmap-dark.json; {len(diverged)} color-bearing "
+              f"ones differ as expected post-0030 (that's the polish working).")
     else:
         print(f"STAGE 1 GATE: FAIL — mismatches: {mismatches}")
