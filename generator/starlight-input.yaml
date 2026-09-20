@@ -198,8 +198,10 @@ patches:
     literal_reason: "背景単色のstep。行政区画/水域との3層ダンスの一部。"
     known_pattern_pending: true
     known_pattern_note: "bvmap-行政区画と同じ「被覆面ダンス」の一部。"
-    # 未解決: background-colorはstep式で3つの値(白/gray_209/白)を持ち、
-    # 「fill-colorをこの1トークンに差し替える」という単純な代入では済まない
-    # (色が式の中に埋まっている)。color_overridesは意図的に書かず、この
-    # patchは現状「注釈のみ」でloaderには適用させない(load_input.py参照)。
-    color_overrides: {}
+    color_overrides:
+      # background-colorはstep式(zoom<4:白、4-8:gray_209、8+:白)。3つの
+      # 出力値をstep_outputsで順番に上書きする——step自体の構造(zoomの
+      # 区切り位置)はbaseのまま、出力の色だけpalette化する
+      # (generator/load_input.pyのapply_step_outputs()参照)。
+      background-color:
+        step_outputs: [gray_255, gray_209, gray_255]

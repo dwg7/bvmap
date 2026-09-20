@@ -49,6 +49,14 @@
 2. **`assemble.py`の`SHARED_TEXT_FONT_LAYERS`を、手書きの独立リストから`category_table.SHARED_TEXT_COLOR_LAYERS`由来の導出に戻した**。`load_input.py`への配線の際に`category_table`のimportを丸ごと外してしまい、5層の共有関係がコードで保証されなくなっていた
 3. **`starlight-input.yaml`の`property: vt_code`フィールドを削除**。全カテゴリが常に`vt_code`固定で、`load_input.py`はこのフィールドを一度も読んでいなかった——将来別プロパティが必要になった時に、実際の配線と一緒に追加する
 
+修正1(loud failureの導入)がきっかけで、そのすぐ後に**backgroundのstep式パッチ自体も解決した**(下記)。「123レイヤーカバーを至上命題にしない、必要なら都度検討済みの課題を反映する」という方針([HANDOVER.md](../../HANDOVER.md))に沿って、機械的にリテラル化する前にこのギャップを埋めた。
+
+## backgroundのstep式パッチ、解決
+
+`generator/load_input.py`に`apply_step_outputs()`を追加した——`["step", input, out0, stop1, out1, ...]`という式の**構造(input・stopの位置)はそのまま**、出力値だけを順番にpalette参照で差し替える。`color_overrides`は`{step_outputs: [gray_255, gray_209, gray_255]}`という形で式の出力を指定できるようになった(単純な1プロパティ=1値のcase以外の第2のケース)。`case`/`match`等、他の式形状はまだ非対応で、その場合は引き続き`ValueError`で明確に止まる。
+
+これにより「被覆面ダンス」3層(`bvmap-行政区画`・`bvmap-水域`・`background`)は全てYAMLのpaletteから駆動されるようになった。副産物として、[前回のコードレビュー](../../generator/assemble.py)で指摘した`literal_count`のミスカウント(指摘#4、当時は見送り)も、backgroundのpatchが本物の上書きになったことで自然に正しい値になった(45 literal / 78 generated、`len(patches)`の3件が全て実際にliteralから除外されるべき3件と一致するようになったため)。
+
 ## 未解決のまま残っていること
 
 - `category_table.py`/`building_color.py`自身の`__main__`検証は、まだ独自のハードコードされた定数を使っている(YAMLの値と**内容としては同一だが、ファイル上は別々に存在**する)。両者がドリフトする可能性は理論上残るが、`assemble.py`は既にYAML側だけを見ているため、実害はStage 1の範囲では発生しない。将来、この重複を一本化するか、単体モジュールの検証もYAML駆動に寄せるかは、次の焼き鈍しの候補

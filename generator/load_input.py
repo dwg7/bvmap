@@ -94,18 +94,40 @@ def build_priority_chains(config):
     return out
 
 
+def apply_step_outputs(expr, tokens, palette):
+    """Overrides a ["step", input, out0, stop1, out1, stop2, out2, ...]
+    expression's literal outputs in place, keeping its own structure
+    (input, stop positions) untouched — the same "structure stays in
+    code/expression, values move to YAML" split used everywhere else in
+    this generator (docs/decisions/0018/0020), extended to step
+    expressions instead of just plain properties."""
+    if not (isinstance(expr, list) and len(expr) >= 3 and expr[0] == "step"):
+        raise ValueError(f"step_outputs given but base value isn't a step expression: {expr!r}")
+    output_indices = list(range(2, len(expr), 2))
+    if len(tokens) != len(output_indices):
+        raise ValueError(
+            f"step_outputs has {len(tokens)} values but the expression has "
+            f"{len(output_indices)} outputs"
+        )
+    new_expr = list(expr)
+    for idx, token in zip(output_indices, tokens):
+        new_expr[idx] = resolve(token, palette)
+    return new_expr
+
+
 def build_patches(config, by_id):
     """patches: <id> -> literal-copied layer from its base, with
     color_overrides applied as top-level paint-property assignments only.
     A property absent from the base layer is left untouched (not every
-    patch's overrides apply to every base). A property that IS present
-    but holds a MapLibre expression (e.g. background's step-based
-    background-color) is not something this mechanism can safely
-    overwrite with a flat value — that raises loudly instead of silently
-    clobbering the expression or silently no-op'ing in a way that looks
-    identical to "property doesn't apply here" (docs/decisions/0020's
-    review found the old key-existence-only check couldn't tell the two
-    apart)."""
+    patch's overrides apply to every base). An override may be a plain
+    palette token (property holds a literal value) or {step_outputs: [...]}
+    (property holds a ["step", ...] expression — see apply_step_outputs()).
+    Any other case where the property holds a MapLibre expression this
+    mechanism doesn't know how to patch (e.g. a case/match/interpolate)
+    raises loudly instead of silently clobbering it or silently no-op'ing
+    in a way indistinguishable from "property doesn't apply here" (docs/
+    decisions/0020's review found the old key-existence-only check
+    couldn't tell the two apart)."""
     palette = config["palette"]
     out = {}
     for entry in config.get("patches", []):
@@ -113,18 +135,22 @@ def build_patches(config, by_id):
         base_layer = by_id[entry["base"]["layer"]]
         layer = json.loads(json.dumps(base_layer))  # deep copy — never mutate the loaded source
 
-        for prop, token in entry.get("color_overrides", {}).items():
+        for prop, override in entry.get("color_overrides", {}).items():
             paint = layer.get("paint", {})
             if prop not in paint:
                 continue  # not a property on this layer at all; left as literal
-            if isinstance(paint[prop], list):
+            if isinstance(override, dict) and "step_outputs" in override:
+                layer["paint"][prop] = apply_step_outputs(paint[prop], override["step_outputs"], palette)
+            elif isinstance(paint[prop], list):
                 raise ValueError(
                     f"patch {lid!r}: color_overrides.{prop} targets a MapLibre expression "
                     f"(e.g. step/case), not a plain literal value — this patch mechanism "
-                    f"only overrides literal top-level values; resolve the expression's "
-                    f"own structure (e.g. which step of a step-expression) before patching it"
+                    f"only overrides literal top-level values (or a step expression's "
+                    f"outputs via {{step_outputs: [...]}}); resolve the expression's own "
+                    f"structure before patching anything else"
                 )
-            layer["paint"][prop] = resolve(token, palette)
+            else:
+                layer["paint"][prop] = resolve(override, palette)
 
         out[lid] = layer
     return out
