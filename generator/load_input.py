@@ -97,10 +97,15 @@ def build_priority_chains(config):
 def build_patches(config, by_id):
     """patches: <id> -> literal-copied layer from its base, with
     color_overrides applied as top-level paint-property assignments only.
-    A patch with no (or an unresolvable) override for a given property is
-    left untouched — e.g. background's color sits inside a step
-    expression, which this mechanism doesn't reach yet (see the YAML's
-    own note), so it's skipped rather than guessed at."""
+    A property absent from the base layer is left untouched (not every
+    patch's overrides apply to every base). A property that IS present
+    but holds a MapLibre expression (e.g. background's step-based
+    background-color) is not something this mechanism can safely
+    overwrite with a flat value — that raises loudly instead of silently
+    clobbering the expression or silently no-op'ing in a way that looks
+    identical to "property doesn't apply here" (docs/decisions/0020's
+    review found the old key-existence-only check couldn't tell the two
+    apart)."""
     palette = config["palette"]
     out = {}
     for entry in config.get("patches", []):
@@ -109,8 +114,16 @@ def build_patches(config, by_id):
         layer = json.loads(json.dumps(base_layer))  # deep copy — never mutate the loaded source
 
         for prop, token in entry.get("color_overrides", {}).items():
-            if prop not in layer.get("paint", {}):
-                continue  # not a plain top-level property on this layer; left as literal
+            paint = layer.get("paint", {})
+            if prop not in paint:
+                continue  # not a property on this layer at all; left as literal
+            if isinstance(paint[prop], list):
+                raise ValueError(
+                    f"patch {lid!r}: color_overrides.{prop} targets a MapLibre expression "
+                    f"(e.g. step/case), not a plain literal value — this patch mechanism "
+                    f"only overrides literal top-level values; resolve the expression's "
+                    f"own structure (e.g. which step of a step-expression) before patching it"
+                )
             layer["paint"][prop] = resolve(token, palette)
 
         out[lid] = layer

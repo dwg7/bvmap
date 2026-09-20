@@ -55,7 +55,6 @@ palette:
 categories:
   building_fill:
     engine: flat_match  # 0018: 単一プロパティのフラット表引き
-    property: vt_code
     groups:
       c3101: {codes: [3101], value: gray_233}
       c3102: {codes: [3102], value: gray_203}
@@ -66,7 +65,6 @@ categories:
 
   building_outline_color:
     engine: flat_match
-    property: vt_code
     groups:
       c3101: {codes: [3101], value: gray_164}
       c3102: {codes: [3102], value: gray_164}
@@ -77,7 +75,6 @@ categories:
 
   building_outline_width:
     engine: flat_match
-    property: vt_code
     value_type: number  # not a color — matched or not, 1px or 0 (0010 §2)
     groups:
       c3101: {codes: [3101], value: 1}
@@ -89,7 +86,6 @@ categories:
 
   anno_text_color:
     engine: flat_match
-    property: vt_code
     # 名前は仮(GSI公式名ではない、category_table.pyのコメント参照)。
     groups:
       c521: {codes: [521], value: anno_29}
@@ -116,7 +112,6 @@ categories:
 
   anno_text_font:
     engine: flat_match
-    property: vt_code
     value_type: font_literal  # 値はcompile_match_expression()に["literal",[name]]として渡す
     groups:
       # text-colorのwater_coastal(上記)より3コード多い(342/347/842、海岸・

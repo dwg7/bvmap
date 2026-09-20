@@ -24,17 +24,18 @@ LITERAL_ANNO_LAYERS below for exactly which ones and why.
 import json
 
 from tier_template import extract_templates, generate_tier_block, KNOWN_TIER4_ANOMALIES
+from category_table import SHARED_TEXT_COLOR_LAYERS
 from load_input import load, build_categories, build_priority_chains, build_patches
 
 # 7 of the 9 Anno layers share the text-font water/coastal split — 2 more
 # than share text-color (docs/decisions/0017's unresolved let-wrapped
 # layers, bvmap-注記シンボル付きソート順100以上/100未満, still use the
 # split for text-font even though their text-color isn't reproduced yet).
-SHARED_TEXT_FONT_LAYERS = [
-    "bvmap-注記シンボルなし縦ソート順100以上", "bvmap-注記シンボルなし横ソート順100以上",
-    "bvmap-注記角度付き線",
-    "bvmap-注記シンボルなし縦ソート順100未満", "bvmap-注記シンボルなし横ソート順100未満",
-    "bvmap-注記シンボル付きソート順100以上", "bvmap-注記シンボル付きソート順100未満",
+# Derived from SHARED_TEXT_COLOR_LAYERS (not hand-copied) so a future edit
+# to that list propagates here automatically.
+SHARED_TEXT_FONT_LAYERS = SHARED_TEXT_COLOR_LAYERS + [
+    "bvmap-注記シンボル付きソート順100以上",
+    "bvmap-注記シンボル付きソート順100未満",
 ]
 
 # Layers carried over verbatim, with the reason grouped by range (docs/
