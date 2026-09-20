@@ -144,4 +144,6 @@ dwg7/bvmap/
       第一稿は着手済み([0030](docs/decisions/0030-starlight-first-color-pass.md))、継続中
 - [ ] 「見えないところの改善」(expression近代化・`patches`のネイティブ生成
       移行等)——第一弾着手済み([0031](docs/decisions/0031-expression-modernization-rgb-normalization.md))、継続中
-- [ ] `hfu/stars`へのPR作成・反映
+- [x] `hfu/stars`へのPR作成・反映([hfu/stars#12](https://github.com/hfu/stars/pull/12)、
+      2026-09-20マージ・本番配置済み。`https://stars.optgeo.org/style/bvmap-starlight`で配信中。
+      配色磨き上げ・「見えないところの改善」は今後も継続——反映は一度きりでなく都度PRする)
