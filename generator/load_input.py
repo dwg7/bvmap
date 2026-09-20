@@ -18,6 +18,7 @@ from category_table import compile_match_expression
 from road_color import compile_road_color_step
 from zl410_road_color import compile_kokudo_color, compile_kousoku_color
 from rail_tunnel_color import compile_main_color as compile_rail_tunnel_main_color
+from anno_symbol_color import compile_symbol_text_color
 
 
 def load(path="generator/starlight-input.yaml"):
@@ -73,7 +74,7 @@ def _parse_rdctg_table(table, palette):
     return out
 
 
-def build_road_color_expression(entry, palette):
+def build_road_color_expression(entry, palette, categories):
     """priority_chains.road_color (engine: priority_case_chain) ->
     compile_road_color_step(). The case-chain *structure* lives in
     road_color.py; only the parameter values come from the YAML."""
@@ -89,7 +90,7 @@ def build_road_color_expression(entry, palette):
     )
 
 
-def build_zl410_kokudo_expression(entry, palette):
+def build_zl410_kokudo_expression(entry, palette, categories):
     """priority_chains.zl410_kokudo_road_color ->
     zl410_road_color.compile_kokudo_color() (docs/decisions/0024)."""
     return compile_kokudo_color(
@@ -103,7 +104,7 @@ def build_zl410_kokudo_expression(entry, palette):
     )
 
 
-def build_zl410_kosoku_expression(entry, palette):
+def build_zl410_kosoku_expression(entry, palette, categories):
     """priority_chains.zl410_kosoku_road_color ->
     zl410_road_color.compile_kousoku_color() (docs/decisions/0024)."""
     return compile_kousoku_color(
@@ -116,13 +117,28 @@ def build_zl410_kosoku_expression(entry, palette):
     )
 
 
-def build_rail_tunnel_main_expression(entry, palette):
+def build_rail_tunnel_main_expression(entry, palette, categories):
     """priority_chains.rail_tunnel_main_color ->
     rail_tunnel_color.compile_main_color() (docs/decisions/0025)."""
     return compile_rail_tunnel_main_color(
         subway_color=resolve(entry["subway_color"], palette),
         station_color=resolve(entry["station_color"], palette),
         default_color=resolve(entry["default_color"], palette),
+    )
+
+
+def build_anno_symbol_text_color_expression(entry, palette, categories):
+    """priority_chains.<name> (engine: nested_match) ->
+    anno_symbol_color.compile_symbol_text_color() (docs/decisions/0027).
+    Unlike the other priority_chains builders, this one's "value" isn't
+    just palette tokens — it reuses an already-compiled categories.*
+    expression verbatim as its base, plus two vt_code lists (not colors,
+    so no palette resolution needed for them)."""
+    base_color_expr = categories[entry["base_category"]]
+    return compile_symbol_text_color(
+        base_color_expr,
+        hide_below_zoom14=entry["hide_below_zoom14"],
+        hide_at_and_above_zoom14=entry["hide_at_zoom14"],
     )
 
 
@@ -146,16 +162,22 @@ PRIORITY_CHAIN_BUILDERS = {
     "zl410_kokudo_road_color": build_zl410_kokudo_expression,
     "zl410_kosoku_road_color": build_zl410_kosoku_expression,
     "rail_tunnel_main_color": build_rail_tunnel_main_expression,
+    "anno_symbol_text_color_100_over": build_anno_symbol_text_color_expression,
+    "anno_symbol_text_color_100_under": build_anno_symbol_text_color_expression,
 }
 
 
-def build_priority_chains(config):
+def build_priority_chains(config, categories):
+    """categories is needed (not just palette) because
+    anno_symbol_text_color_* reuses an already-compiled categories.*
+    expression as its base rather than building colors from scratch —
+    every other builder ignores this argument."""
     palette = config["palette"]
     out = {}
     for name, entry in config.get("priority_chains", {}).items():
         if name not in PRIORITY_CHAIN_BUILDERS:
             raise NotImplementedError(f"no builder registered for priority_chains.{name!r}")
-        out[name] = PRIORITY_CHAIN_BUILDERS[name](entry, palette)
+        out[name] = PRIORITY_CHAIN_BUILDERS[name](entry, palette, categories)
     return out
 
 
@@ -270,7 +292,7 @@ if __name__ == "__main__":
     by_id = {l["id"]: l for l in style["layers"]}
 
     categories = build_categories(config)
-    chains = build_priority_chains(config)
+    chains = build_priority_chains(config, categories)
     patches, _patched_ids = build_patches(config, by_id)
     standalone = build_standalone_layers(config, by_id, categories, chains)
 
@@ -323,6 +345,12 @@ if __name__ == "__main__":
         ("standalone bvmap-軌道の中心線", standalone["bvmap-軌道の中心線"], by_id["bvmap-軌道の中心線"]),
         ("standalone bvmap-軌道の中心線トンネル",
          standalone["bvmap-軌道の中心線トンネル"], by_id["bvmap-軌道の中心線トンネル"]),
+        ("anno_road_number_color", categories["anno_road_number_color"],
+         by_id["bvmap-注記道路番号"]["paint"]["text-color"]),
+        ("anno_symbol_text_color_100_over", chains["anno_symbol_text_color_100_over"],
+         by_id["bvmap-注記シンボル付きソート順100以上"]["paint"]["text-color"]),
+        ("anno_symbol_text_color_100_under", chains["anno_symbol_text_color_100_under"],
+         by_id["bvmap-注記シンボル付きソート順100未満"]["paint"]["text-color"]),
     ]
 
     mismatches = [name for name, generated, original in checks

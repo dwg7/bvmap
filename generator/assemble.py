@@ -69,15 +69,24 @@ LITERAL_RANGES = {
         [i for i in range(96, 114) if i not in (98, 99, 100, 104, 106, 107, 108, 112, 113)],
 }
 
-# The 2 let-wrapped symbol-attached Anno layers (docs/decisions/0017's
-# unresolved section) plus the 2 Anno layers with no shared pattern at
-# all (シンボル付き重なり, 道路番号) — 4 of the 9 Anno layers, literal.
+# bvmap-注記シンボル付き重なり is the only genuinely one-off Anno layer
+# (a pure icon layer with no text-color at all — docs/decisions/0027).
+# The other 3 that used to live here (道路番号, シンボル付きソート順
+# 100以上/100未満) turned out to have real, reproducible color logic —
+# see ANNO_TEXT_COLOR_SOURCES below.
 LITERAL_ANNO_LAYERS = [
     "bvmap-注記シンボル付き重なり",
-    "bvmap-注記道路番号",
-    "bvmap-注記シンボル付きソート順100以上",
-    "bvmap-注記シンボル付きソート順100未満",
 ]
+
+# Which categories.*/priority_chains.* expression drives each Anno
+# layer's text-color (docs/decisions/0027) — everything not listed here
+# and not in LITERAL_ANNO_LAYERS has no text-color property at all.
+ANNO_TEXT_COLOR_SOURCES = {
+    lid: ("categories", "anno_text_color") for lid in SHARED_TEXT_COLOR_LAYERS
+}
+ANNO_TEXT_COLOR_SOURCES["bvmap-注記道路番号"] = ("categories", "anno_road_number_color")
+ANNO_TEXT_COLOR_SOURCES["bvmap-注記シンボル付きソート順100以上"] = ("chains", "anno_symbol_text_color_100_over")
+ANNO_TEXT_COLOR_SOURCES["bvmap-注記シンボル付きソート順100未満"] = ("chains", "anno_symbol_text_color_100_under")
 
 
 def build_tier_block(by_id, categories, chains):
@@ -116,15 +125,16 @@ def build_tier_block(by_id, categories, chains):
     return out
 
 
-def build_anno_block(anno_ids, by_id, categories):
-    text_color_generated = categories["anno_text_color"]
+def build_anno_block(anno_ids, by_id, categories, chains):
     text_font_generated = categories["anno_text_font"]
+    sources = {"categories": categories, "chains": chains}
 
     out = []
     for lid in anno_ids:
         layer = json.loads(json.dumps(by_id[lid]))  # deep copy; we mutate paint/layout below
-        if lid not in LITERAL_ANNO_LAYERS:
-            layer["paint"]["text-color"] = text_color_generated
+        if lid in ANNO_TEXT_COLOR_SOURCES:
+            section, name = ANNO_TEXT_COLOR_SOURCES[lid]
+            layer["paint"]["text-color"] = sources[section][name]
         if lid in SHARED_TEXT_FONT_LAYERS:
             layer["layout"]["text-font"] = text_font_generated
         out.append(layer)
@@ -139,7 +149,7 @@ if __name__ == "__main__":
 
     config = load()
     categories = build_categories(config)
-    chains = build_priority_chains(config)
+    chains = build_priority_chains(config, categories)
     patches, patched_ids = build_patches(config, by_id)
     standalone = build_standalone_layers(config, by_id, categories, chains)
 
@@ -166,7 +176,7 @@ if __name__ == "__main__":
         assembled_by_id[layer["id"]] = layer
 
     anno_ids = [l["id"] for l in layers if l["id"].startswith("bvmap-注記")]
-    for layer in build_anno_block(anno_ids, by_id, categories):
+    for layer in build_anno_block(anno_ids, by_id, categories, chains):
         assembled_by_id[layer["id"]] = layer
 
     assert len(assembled_by_id) == len(layers), (len(assembled_by_id), len(layers))
