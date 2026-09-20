@@ -56,9 +56,11 @@ SHARED_TEXT_FONT_LAYERS = SHARED_TEXT_COLOR_LAYERS + [
 # vt_code match tables); bvmap-構造物面の外周線/bvmap-等高線数値部/
 # bvmap-等深線数値部 are `patches` with a resolved color_overrides.
 # Excluded here by index so they aren't double-assigned.
+# All 3 ZL4-10 layers (indices 23-25) are now `layers: engine: standalone`
+# entries too (docs/decisions/0024) — their own independently-authored
+# road/rail color tables, distinct from both each other and from the tier
+# structure's road_color.py.
 LITERAL_RANGES = {
-    "ZL4-10 low-zoom overview (layers 23-25, excluded from the tier block by design)":
-        [23, 24, 25],
     "post-tier individual layers (dashed roads, tunnels, power lines, etc., 96-113 "
     "minus the 5 now covered by standalone/patches — see docs/decisions/0022)":
         [i for i in range(96, 114) if i not in (106, 107, 108, 112, 113)],

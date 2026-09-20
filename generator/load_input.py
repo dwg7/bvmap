@@ -16,6 +16,7 @@ import yaml
 
 from category_table import compile_match_expression
 from road_color import compile_road_color_step
+from zl410_road_color import compile_kokudo_color, compile_kousoku_color
 
 
 def load(path="generator/starlight-input.yaml"):
@@ -46,30 +47,71 @@ def build_flat_match_expression(entry, palette):
     categories = {name: group["codes"] for name, group in entry["groups"].items()}
     values = {name: resolve_value(group["value"]) for name, group in entry["groups"].items()}
     values["default"] = resolve_value(entry["default"])
-    return compile_match_expression(categories, values)
+    return compile_match_expression(categories, values, property=entry.get("property", "vt_code"))
+
+
+def _parse_vt_code_table(table, palette):
+    """{"code1,code2,...": token} -> {(code1,code2,...): resolved_value},
+    for the vt_code-keyed width ramps shared by road_color and
+    zl410_road_color."""
+    out = {}
+    for key, value in table.items():
+        codes = tuple(int(x.strip()) for x in key.split(","))
+        out[codes] = resolve(value, palette)
+    return out
+
+
+def _parse_rdctg_table(table, palette):
+    """{"key" or "key1,key2": token} -> {key: resolved_value} or
+    {(key1,key2): resolved_value} for a grouped vt_rdctg match key (e.g.
+    ZL4-10 国道's ["国道","主要道路"] grouping, docs/decisions/0024)."""
+    out = {}
+    for key, value in table.items():
+        parts = tuple(p.strip() for p in key.split(","))
+        out[parts[0] if len(parts) == 1 else parts] = resolve(value, palette)
+    return out
 
 
 def build_road_color_expression(entry, palette):
     """priority_chains.road_color (engine: priority_case_chain) ->
     compile_road_color_step(). The case-chain *structure* lives in
     road_color.py; only the parameter values come from the YAML."""
-    bridge_table = {k: resolve(v, palette) for k, v in entry["bridge_table"].items()}
-    general_table = {k: resolve(v, palette) for k, v in entry["general_table"].items()}
-
-    width_ramp = {}
-    for key, value in entry["width_ramp"].items():
-        codes = tuple(int(x.strip()) for x in key.split(","))
-        width_ramp[codes] = resolve(value, palette)
-
     return compile_road_color_step(
         bridge_vt_codes=entry["bridge_vt_codes"],
-        bridge_table=bridge_table,
+        bridge_table=_parse_rdctg_table(entry["bridge_table"], palette),
         bridge_default=resolve(entry["bridge_default"], palette),
-        general_table=general_table,
+        general_table=_parse_rdctg_table(entry["general_table"], palette),
         motorway_color=resolve(entry["motorway_color"], palette),
-        width_ramp=width_ramp,
+        width_ramp=_parse_vt_code_table(entry["width_ramp"], palette),
         width_ramp_default=resolve(entry["width_ramp_default"], palette),
         narrow_exception_color=resolve(entry["narrow_exception_color"], palette),
+    )
+
+
+def build_zl410_kokudo_expression(entry, palette):
+    """priority_chains.zl410_kokudo_road_color ->
+    zl410_road_color.compile_kokudo_color() (docs/decisions/0024)."""
+    return compile_kokudo_color(
+        bridge_vt_codes=entry["bridge_vt_codes"],
+        motorway_color=resolve(entry["motorway_color"], palette),
+        bridge_table=_parse_rdctg_table(entry["bridge_table"], palette),
+        bridge_default=resolve(entry["bridge_default"], palette),
+        general_table=_parse_rdctg_table(entry["general_table"], palette),
+        general_default=resolve(entry["general_default"], palette),
+        width_ramp=_parse_vt_code_table(entry["width_ramp"], palette),
+    )
+
+
+def build_zl410_kosoku_expression(entry, palette):
+    """priority_chains.zl410_kosoku_road_color ->
+    zl410_road_color.compile_kousoku_color() (docs/decisions/0024)."""
+    return compile_kousoku_color(
+        bridge_vt_codes=entry["bridge_vt_codes"],
+        bridge_table=_parse_rdctg_table(entry["bridge_table"], palette),
+        bridge_default=resolve(entry["bridge_default"], palette),
+        general_table=_parse_rdctg_table(entry["general_table"], palette),
+        general_default=resolve(entry["general_default"], palette),
+        width_ramp=_parse_vt_code_table(entry["width_ramp"], palette),
     )
 
 
@@ -83,14 +125,22 @@ def build_categories(config):
     }
 
 
+PRIORITY_CHAIN_BUILDERS = {
+    "road_color": build_road_color_expression,
+    "zl410_kokudo_road_color": build_zl410_kokudo_expression,
+    "zl410_kosoku_road_color": build_zl410_kosoku_expression,
+}
+
+
 def build_priority_chains(config):
     palette = config["palette"]
     out = {}
     for name, entry in config.get("priority_chains", {}).items():
-        if entry["engine"] == "priority_case_chain" and name == "road_color":
-            out[name] = build_road_color_expression(entry, palette)
-        else:
-            raise NotImplementedError(f"unknown priority_chains engine for {name!r}")
+        if entry["engine"] != "priority_case_chain":
+            raise NotImplementedError(f"unknown priority_chains engine for {name!r}: {entry['engine']!r}")
+        if name not in PRIORITY_CHAIN_BUILDERS:
+            raise NotImplementedError(f"no builder registered for priority_chains.{name!r}")
+        out[name] = PRIORITY_CHAIN_BUILDERS[name](entry, palette)
     return out
 
 
@@ -231,6 +281,18 @@ if __name__ == "__main__":
         ("patch bvmap-等深線数値部", patches["bvmap-等深線数値部"], by_id["bvmap-等深線数値部"]),
         ("standalone bvmap-構造物面", standalone["bvmap-構造物面"], by_id["bvmap-構造物面"]),
         ("standalone bvmap-構造物線", standalone["bvmap-構造物線"], by_id["bvmap-構造物線"]),
+        ("zl410_rail_color", categories["zl410_rail_color"],
+         by_id["bvmap-鉄道中心線ZL4-10"]["paint"]["line-color"]),
+        ("zl410_kokudo_road_color", chains["zl410_kokudo_road_color"],
+         by_id["bvmap-道路中心線ZL4-10国道"]["paint"]["line-color"]),
+        ("zl410_kosoku_road_color", chains["zl410_kosoku_road_color"],
+         by_id["bvmap-道路中心線ZL4-10高速"]["paint"]["line-color"]),
+        ("standalone bvmap-道路中心線ZL4-10国道", standalone["bvmap-道路中心線ZL4-10国道"],
+         by_id["bvmap-道路中心線ZL4-10国道"]),
+        ("standalone bvmap-道路中心線ZL4-10高速", standalone["bvmap-道路中心線ZL4-10高速"],
+         by_id["bvmap-道路中心線ZL4-10高速"]),
+        ("standalone bvmap-鉄道中心線ZL4-10", standalone["bvmap-鉄道中心線ZL4-10"],
+         by_id["bvmap-鉄道中心線ZL4-10"]),
     ]
 
     mismatches = [name for name, generated, original in checks

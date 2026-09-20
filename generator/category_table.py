@@ -14,10 +14,12 @@ verbatim.
 import json
 
 
-def compile_match_expression(categories: dict, property_table: dict):
-    """categories: {name: [vt_code, ...]}
+def compile_match_expression(categories: dict, property_table: dict, property: str = "vt_code"):
+    """categories: {name: [key, ...]} (usually vt_code ints, but any
+    feature property's values work — e.g. vt_rtcode strings for
+    docs/decisions/0024's ZL4-10 rail color)
     property_table: {name: value, ..., "default": value}
-    Returns a MapLibre ["match", ["get","vt_code"], ...] expression.
+    Returns a MapLibre ["match", ["get", property], ...] expression.
 
     Category order matters (MapLibre evaluates match branches in order,
     though for vt_code this only matters if codes were to appear in more
@@ -32,7 +34,7 @@ def compile_match_expression(categories: dict, property_table: dict):
         body.append(key)
         body.append(property_table[name])
     body.append(property_table["default"])
-    return ["match", ["get", "vt_code"], *body]
+    return ["match", ["get", property], *body]
 
 
 # The Anno text-color ramp (docs/decisions/0008), extracted from

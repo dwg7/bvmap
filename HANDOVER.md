@@ -28,7 +28,8 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STAR
 6. 123レイヤーカバーの拡大、継続中。方針: 123カバーを至上命題にせず、既に検討済みの知見がある層から反映する
    - **完了(2026-09-20、[0021](docs/decisions/0021-patches-by-id-coverage-expansion.md))**: [0008](docs/decisions/0008-cartographic-layer-ordering.md)で役割確定済みの20層(陸水面・被覆面付随の線群、行政区画線、等高線・等深線)を`patches`にid参照で追加(色は未検証、注釈のみ)。backgroundのstep式patchも解決
    - **完了(2026-09-20、[0022](docs/decisions/0022-zl4-10-and-post-tier-layers-footprint.md)/[0023](docs/decisions/0023-structure-and-contour-layers-implemented.md))**: ZL4-10・tierブロック後の個別18層を踏み跡調査([0022](docs/decisions/0022-zl4-10-and-post-tier-layers-footprint.md))。うち構造物3層・等高線/等深線+数値部4層を実装([0023](docs/decisions/0023-structure-and-contour-layers-implemented.md))——構造物は新設した`layers: engine: standalone`でYAML駆動、等高線/等深線は数値部とpaletteトークンを共有するよう統一。副産物: `layers:`セクションのtier_templateエントリが実はコードから未使用(ドキュメントのみ)だったと判明
-   - **残り**: ZL4-10(専用の優先順位連鎖が必要、モジュール新設 vs リテラル保持は未決定)、軌道2層の色分け非対称性(GSI地物コード表との突き合わせ必要、保留)、tierブロック後の残り13層(送電線・道路縁等の一回性装飾)、注記の一部4層
+   - **完了(2026-09-20、[0024](docs/decisions/0024-zl410-dedicated-module.md))**: ZL4-10専用モジュール`generator/zl410_road_color.py`。国道/高速の2レイヤーは同じテーブルを共有していないと判明(motorwayチェックの有無という構造レベルの違い)——2つの独立した関数で実装。`category_table.compile_match_expression()`に`property`引数を実配線(鉄道のvt_rtcode分岐のため)
+   - **残り**: 軌道2層の色分け非対称性(GSI地物コード表との突き合わせ必要、保留)、tierブロック後の残り13層(送電線・道路縁等の一回性装飾)、注記の一部4層
 7. **次はここ**: 実際に`bvmap-starlight`の配色をStarlightの方向性(低彩度・明るめ・銀灰色寄り)へ磨き上げる(まだ着手していない、これが本来の目的)——今は`generator/starlight-input.yaml`のpaletteセクションを差し替えるだけで配色が変わる状態になっている。⑥で追加した20層の色検証も、この磨き上げ作業の一部として行う
 7. `hfu/stars`へのPR作成([0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md))
 

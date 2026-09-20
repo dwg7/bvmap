@@ -60,6 +60,8 @@ palette:
   # (バイト完全一致のゲートを保つため)。
   gray_161_rgb: "rgb(161,161,161)"
   gray_88_rgb: "rgb(88,88,88)"
+  # ZL4-10鉄道(0024)のdefault色。gray_100と同じ数値だがrgb()形式。
+  gray_100_rgb: "rgb(100,100,100)"
 
 categories:
   building_fill:
@@ -108,6 +110,17 @@ categories:
       c4201: {codes: [4201], value: black}
       c4202: {codes: [4202], value: gray_100}
     default: transparent
+
+  # ZL4-10鉄道(0024)。vt_codeではなくvt_rtcode(鉄道種別)で分岐する唯一の
+  # flat_matchカテゴリ——"codes"はvt_rtcodeの文字列値(vt_codeの整数では
+  # ない)を指す。property: vt_rtcodeが実際に配線されて初めて意味を持つ
+  # フィールド(0020の指摘#6で一度削除した未使用フィールドとは違う)。
+  zl410_rail_color:
+    engine: flat_match
+    property: vt_rtcode
+    groups:
+      subway: {codes: ["地下鉄"], value: gray_161}
+    default: gray_100_rgb
 
   anno_text_color:
     engine: flat_match
@@ -170,6 +183,58 @@ priority_chains:
     width_ramp_default: gray_255
     narrow_exception_color: gray_173  # zoom<14限定、vt_rnkwidth=="3m-5.5m未満"(0018)
 
+  # ZL4-10(z<11概観)の道路色。tierのroad_colorとは独立したテーブル
+  # (0022/0024)——bridge_vt_codesが広い、都道府県道の値が違う、
+  # 「国道,主要道路」というグループキーがある、幅員ランプが先・
+  # motorway/rdctg判定が後という逆順のネスト。構造はgenerator/
+  # zl410_road_color.compile_kokudo_color()が持つ。
+  zl410_kokudo_road_color:
+    engine: priority_case_chain
+    bridge_vt_codes: [2704, 2714, 2724, 2734]
+    bridge_table:
+      "国道,主要道路": gray_160
+      都道府県道: gray_100
+      市区町村道等: gray_100
+      高速自動車国道等: gray_157
+      その他: gray_100
+      不明: gray_100
+    bridge_default: gray_100
+    general_table:
+      "国道,主要道路": gray_160
+      都道府県道: gray_226
+      高速自動車国道等: gray_157
+    general_default: gray_255
+    motorway_color: gray_157
+    width_ramp:
+      "2721,2722,2723": gray_173
+      "2731,2732,2733": gray_255  # NOTE: tierの同じvt_codeバケットはgray_200(0018)——ZL4-10は別値
+
+  # ZL4-10の高速道路専用レイヤー。filterがvt_rdctg=="高速自動車国道等"に
+  # 絞られているため、vt_motorwayの再チェックが無い(0024の推測)。構造は
+  # generator/zl410_road_color.compile_kousoku_color()が持つ。
+  zl410_kosoku_road_color:
+    engine: priority_case_chain
+    bridge_vt_codes: [2704, 2714, 2724, 2734]
+    bridge_table:
+      国道: gray_160
+      都道府県道: gray_226
+      市区町村道等: gray_100
+      高速自動車国道等: gray_157
+      その他: gray_100
+      不明: gray_100
+    bridge_default: gray_100
+    general_table:
+      国道: gray_160
+      都道府県道: gray_226
+      市区町村道等: gray_255
+      高速自動車国道等: gray_157
+      その他: gray_255
+      不明: gray_255
+    general_default: gray_255
+    width_ramp:
+      "2721,2722,2723": gray_173
+      "2731,2732,2733": gray_255
+
 layers:
   # tier_template.pyの14ロールのうち、色を持つものだけ抜粋。tierとfilterの
   # 機械的展開はコード側(generator/tier_template.py)の仕事。
@@ -198,6 +263,23 @@ layers:
     engine: standalone
     paint:
       line-color: {from: categories.structure_line}
+
+  # ZL4-10(0022/0024)。3層とも独自テーブルなので、道路2層は
+  # priority_chains、鉄道1層はcategoriesと、それぞれ別の仕組みから配線
+  # される——tier構造の道路色/建物と同じ「エンジンの再利用」だが、
+  # パラメータは完全に別物。
+  - id: bvmap-道路中心線ZL4-10国道
+    engine: standalone
+    paint:
+      line-color: {from: priority_chains.zl410_kokudo_road_color}
+  - id: bvmap-道路中心線ZL4-10高速
+    engine: standalone
+    paint:
+      line-color: {from: priority_chains.zl410_kosoku_road_color}
+  - id: bvmap-鉄道中心線ZL4-10
+    engine: standalone
+    paint:
+      line-color: {from: categories.zl410_rail_color}
 
 patches:
   # 「リテラル保持」層。生JSONは埋め込まず、bvmap-dark.jsonの該当レイヤーを
