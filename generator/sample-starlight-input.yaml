@@ -1,0 +1,151 @@
+# generator/sample-starlight-input.yaml
+#
+# 試作(prototype)、2026-09-20。ジェネレーターの入力候補となるYAMLの
+# サンプル——全123レイヤーの網羅ではなく、これまでに確認した3つの仕組み
+# (docs/decisions/0018の2種のコンパイラ + tier_template.pyの構造テンプレート)
+# と、本ファイルで新たに提案する第4の仕組み「patches」が、1つの入力ファイル
+# の中でどう共存するかを見るための一部抜粋。ディスカッション用、まだどの
+# Pythonコードからも読まれていない。
+#
+# 設計方針(このコメント自体もAI向けの構造化コメントの試作):
+#   - palette: 生のrgba値は1箇所にしか書かない。他は全てここへの参照にする。
+#     Starlightの配色磨き上げは、理想的には主にこのセクションを触るだけで
+#     済むようにしたい——これが「リテラル保持でYAMLを貧相にしない」ための核。
+#   - categories / priority_chains: docs/decisions/0018で確認済みの2つの
+#     コンパイラ形状。「値の対応表」だけがYAMLのデータで、「どの順番で
+#     判定するか」という構造(match全体の形、caseの入れ子)はコード側
+#     (generator/*.py)が持つ。構造までYAMLに落とすと、単なるJSONの
+#     入れ子表現になり、可読性もAI可読性も上がらないため。
+#   - layers: tier_template.pyが展開する14ロールのうち、色を持つものだけ
+#     抜粋。塗り/色をcategories・priority_chainsに配線する——現状の
+#     tier_template.pyは各roleのpaintをtier0からの不透明コピーとして
+#     扱っているが(Stage 1のゲートはそれで通っている)、Starlightの配色
+#     磨き上げにはpalette経由の配線が要る。
+#   - patches: 「リテラル保持」層。生JSONを埋め込まず、bvmap-dark.jsonの
+#     該当レイヤーをbaseとして、①なぜliteralか ②既知パターンが未解明の
+#     まま残っているか ③色だけpalette参照に差し替える、の3点だけを書く。
+
+palette:
+  # 各トークンの由来(ADR参照)をコメントに残す。「なぜこの値か」を将来の
+  # AIセッションが情報源を再度掘り返さずに済むように。
+  gray_100: "rgba(100,100,100,1)"  # 62レイヤー横断の汎用色。単独の意味を持たない(0010 §4)
+  gray_157: "rgba(157,157,157,1)"  # vt_motorway==1 / 高速自動車国道等(0018)
+  gray_160: "rgba(160,160,160,1)"  # 国道(0018)
+  gray_226: "rgba(226,226,226,1)"  # 都道府県道(0018)
+  gray_173: "rgba(173,173,173,1)"  # 幅員ランプ: vt_code in [2721,2722,2723](0018)
+  gray_200: "rgba(200,200,200,1)"  # 幅員ランプ: vt_code in [2731,2732,2733](0018)
+  gray_255: "rgba(255,255,255,1)"  # 幅員ランプdefault、および行政区画の白(被覆面の抜き)
+  gray_233: "rgba(233,233,233,1)"  # 普通建物 塗り(0010 §2)
+  gray_203: "rgba(203,203,203,1)"  # 堅ろう建物/無壁舎 塗り(0010 §2)
+  gray_152: "rgba(152,152,152,1)"  # 高層建物 塗り(0010 §2)
+  gray_164: "rgba(164,164,164,1)"  # 建物 輪郭、種別によらず一律(0010 §2)
+  gray_209: "rgba(209,209,209,1)"  # 水域(WA)塗り。背景(zoom4-8)と偶然同値(0010 §4)
+  transparent: "rgba(0,0,0,0)"
+
+categories:
+  building_fill:
+    engine: flat_match  # 0018: 単一プロパティのフラット表引き
+    property: vt_code
+    groups:
+      c3101: {codes: [3101], value: gray_233}
+      c3102: {codes: [3102], value: gray_203}
+      c3103: {codes: [3103], value: gray_152}
+      c3111: {codes: [3111], value: gray_203}
+      c3112: {codes: [3112], value: gray_203}
+    default: transparent
+
+  building_outline_color:
+    engine: flat_match
+    property: vt_code
+    groups:
+      c3101: {codes: [3101], value: gray_164}
+      c3102: {codes: [3102], value: gray_164}
+      c3103: {codes: [3103], value: gray_164}
+      c3111: {codes: [3111], value: gray_164}
+      c3112: {codes: [3112], value: gray_164}
+    default: transparent
+
+priority_chains:
+  road_color:
+    engine: priority_case_chain  # 0018: 複数プロパティにまたがる優先順位付きcase連鎖
+    # 判定の順序・入れ子構造はgenerator/road_color.pyが持つ。ここではその
+    # 構造が参照するパラメータだけを宣言する。
+    bridge_vt_codes: [2704, 2714]
+    bridge_table:  # vt_rdctg -> palette。alpha 0.5固定はコード側の責務
+      国道: gray_160
+      都道府県道: gray_226
+      市区町村道等: gray_100
+      高速自動車国道等: gray_157
+      その他: gray_100
+      不明: gray_100
+    bridge_default: gray_100
+    general_table:  # 一般道でvt_rdctg単独で色分けされる3カテゴリのみ(0018)
+      国道: gray_160
+      都道府県道: gray_226
+      高速自動車国道等: gray_157
+    motorway_override: gray_157
+    width_ramp:  # 一般道のdefaultが落ちる先(vt_rnkwidth/vt_code駆動、0018)
+      "2721,2722,2723": gray_173
+      "2731,2732,2733": gray_200
+    width_ramp_default: gray_255
+
+layers:
+  # tier_template.pyの14ロールのうち、色を持つものだけ抜粋。tierとfilterの
+  # 機械的展開はコード側(generator/tier_template.py)の仕事。
+  - role: 道路中心線色
+    engine: tier_template
+    paint:
+      line-color: {from: priority_chains.road_color}
+  - role: 建築物
+    engine: tier_template
+    paint:
+      fill-color: {from: categories.building_fill}
+  - role: 建築物の外周線
+    engine: tier_template
+    paint:
+      line-color: {from: categories.building_outline_color}
+
+patches:
+  # 「リテラル保持」層。生JSONは埋め込まず、bvmap-dark.jsonの該当レイヤーを
+  # baseにして、①なぜliteralか ②既知パターン未解明フラグ ③色のpalette化、
+  # の3点だけをここに書く。値はbvmap-dark.jsonから実際に読み取って検証済み
+  # (2026-09-20)。
+  - id: bvmap-行政区画
+    base: {source: style/bvmap-dark.json, layer: bvmap-行政区画}
+    literal_reason: >
+      被覆面。塗りは白一色で「未描画」に近い(行政区画そのものを見せる層で
+      はなく、背景の反転ダンスの一部)。単独のvt_code分岐を持たないため、
+      compiled化するテーブルが存在しない。
+    known_pattern_pending: true
+    known_pattern_note: >
+      background / bvmap-水域 と3層で「小縮尺は背景色、大縮尺はWAを描画」
+      という分業をしている(セッション内で確認済み、未ADR化)。将来この
+      3層をセットで1つの「被覆面ダンス」コンポーネントとして括り出す余地
+      がある。
+    color_overrides:
+      fill-color: gray_255
+
+  - id: bvmap-水域
+    base: {source: style/bvmap-dark.json, layer: bvmap-水域}
+    literal_reason: >
+      被覆面。fill-opacityのinterpolate/case構造(zoom<11でvt_code 5201系
+      =河川湖池を間引く、0008で検証済み)は単独ロジックで他レイヤーと
+      共有されない。
+    known_pattern_pending: true
+    known_pattern_note: "bvmap-行政区画と同じ「被覆面ダンス」の一部。"
+    color_overrides:
+      fill-color: gray_209
+
+  - id: background
+    base: {source: style/bvmap-dark.json, layer: background}
+    literal_reason: "背景単色のstep。行政区画/水域との3層ダンスの一部。"
+    known_pattern_pending: true
+    known_pattern_note: "bvmap-行政区画と同じ「被覆面ダンス」の一部。"
+    color_overrides:
+      # 未解決: background-colorはstep式で3つの値(白/gray_209/白)を持ち、
+      # 「fill-colorをこの1トークンに差し替える」という単純な代入では
+      # 済まない。stepの特定の停止点(この場合zoom 4-8区間の値)だけを
+      # 差し替える書き方がまだ決まっていない——上のfill-color系のような
+      # 「トップレベル1プロパティ=1値」の場合と違い、式の中に埋まった値を
+      # 指す記法が必要になる。次の検討ポイント。
+      mid_zoom_gray: gray_209  # 仮運用: 値だけ書き、パスの記法は未確定
