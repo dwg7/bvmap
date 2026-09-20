@@ -4,7 +4,7 @@
 
 ## 現在の状態
 
-配色調整は未着手。現時点では`bvmap-dark.json`と完全に同一(`name`フィールドのみ異なる)。
+`generator/assemble.py`が`generator/starlight-input.yaml`から生成する(手動編集しない、[docs/decisions/0029](../docs/decisions/0029-assemble-writes-starlight-json.md))。2026-09-20時点で123層中108層が生成/YAMLパッチ駆動、55層が`bvmap-dark.json`と内容差分あり(意図した配色変更、構造は同一)。設計の詳細は[docs/bvmap-starlight-cartographic-design.md](../docs/bvmap-starlight-cartographic-design.md)を参照。
 
 ## 経緯
 

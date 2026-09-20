@@ -1,8 +1,11 @@
 # HANDOVER — 2026-09-20時点
 
 このファイルは、コンテキストのcompact直前に書き出した引き継ぎ。次のセッション(または
-compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STARLIGHT_EXPLORATION.md`の順で
-読むこと。
+compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→(全体像を掴むなら)
+[docs/bvmap-starlight-cartographic-design.md](docs/bvmap-starlight-cartographic-design.md)、
+(個々の経緯を追うなら)`docs/decisions/`のADRの順で読むこと。
+`docs/STARLIGHT_EXPLORATION.md`はケース・カンファレンス期(0009〜0015)の
+一覧で、現在は上記2つが優先度の高い入口。
 
 ## 今どこにいるか
 

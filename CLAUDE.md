@@ -17,8 +17,8 @@ ADRが「経緯・判断の一次記録」であるのに対し、[docs/bvmap-st
 と同期させてまとめています。新しいセッションで全体像を素早く掴みたい時は
 ADRを1つずつ読むより先にこちらが役立ちます。
 
-姉妹プロジェクト: [dwg7/kaga0](https://claude.ai/kaga0/CLAUDE.md)、
-[dwg7/zukaku](https://claude.ai/zukaku/CLAUDE.md)(同じ「実装より先に調査」
+姉妹プロジェクト: [dwg7/kaga0](https://github.com/dwg7/kaga0/blob/main/CLAUDE.md)、
+[dwg7/zukaku](https://github.com/dwg7/zukaku/blob/main/CLAUDE.md)(同じ「実装より先に調査」
 という作法を踏襲)
 
 ## 1. 現在の目標(2026-09-20時点)

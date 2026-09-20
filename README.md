@@ -16,8 +16,11 @@ MapLibreスタイルの**開発ワークスペース**。実際に`stars.optgeo.
 
 - `style/bvmap-dark.json` — stars.optgeo.orgで現在配信中のスタイルの無加工コピー
 - `style/bvmap-starlight.json` — Apple「Starlight」の色調(低彩度・明るめ・
-  銀灰色寄り)を目指して磨き上げ中のスタイル。詳細は
-  [style/bvmap-starlight.md](style/bvmap-starlight.md)
+  銀灰色寄り)を目指して磨き上げ中のスタイル。`generator/`が
+  `generator/starlight-input.yaml`から生成する(手動編集しない)。詳細は
+  [style/bvmap-starlight.md](style/bvmap-starlight.md)、設計の背景は
+  [docs/bvmap-starlight-cartographic-design.md](docs/bvmap-starlight-cartographic-design.md)
+  を参照
 
 ## プレビュー
 
