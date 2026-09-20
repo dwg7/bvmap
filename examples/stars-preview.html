@@ -71,20 +71,20 @@ import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibr
   window.__map = map; // debugging aid
 
   let currentStyleURL = "https://stars.optgeo.org/style/bvmap-starlight";
-  let switching = false;
 
   const panel = document.getElementById("control-panel");
   panel.addEventListener("click", (e) => {
     const styleBtn = e.target.closest("button[data-style]");
     if (styleBtn) {
       const url = styleBtn.dataset.style;
-      // Same fix as examples/style-preview.html: bvmap-dark and
-      // bvmap-starlight share identical layer ids/order, so setStyle()'s
-      // default diff:true path is unreliable here — force a full
-      // replacement and ignore overlapping clicks.
-      if (switching || url === currentStyleURL) return;
-      switching = true;
-      map.once("idle", () => { switching = false; });
+      if (url === currentStyleURL) return;
+      // diff:false forces a full style replacement — see
+      // examples/style-preview.html for why (bvmap-dark/bvmap-starlight
+      // share identical layer ids/order, so MapLibre's default diff:true
+      // path tries a fine-grained update that doesn't reliably pick up
+      // style-wide changes like sprite/glyphs) and for two heavier
+      // alternatives (a re-entrancy flag, recreating the whole Map
+      // instance) that were tried and reverted for their own failure modes.
       map.setStyle(url, { diff: false });
       currentStyleURL = url;
       for (const b of panel.querySelectorAll("button[data-style]")) {

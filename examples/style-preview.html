@@ -62,25 +62,30 @@ import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibr
   window.__map = map; // debugging aid
 
   let currentStyleURL = "../style/bvmap-dark.json";
-  let switching = false;
 
   const panel = document.getElementById("style-panel");
   panel.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-style]");
     if (!btn) return;
     const url = btn.dataset.style;
-    // Guard against MapLibre's default diff:true setStyle path, and against
-    // overlapping calls: bvmap-dark.json/bvmap-starlight.json share the same
-    // 123 layer ids/order by design (the generator's structural gate), so
-    // MapLibre's diff tries a fine-grained update (including the sprite/
-    // glyphs URLs) instead of a full teardown — that path has been
-    // unreliable here (switching silently stops taking effect after a few
-    // clicks). diff:false forces a full style replacement every time, and
-    // ignoring clicks while one is still in flight avoids queuing a second
-    // setStyle before the first has settled.
-    if (switching || url === currentStyleURL) return;
-    switching = true;
-    map.once("idle", () => { switching = false; });
+    if (url === currentStyleURL) return;
+    // diff:false forces a full style replacement. bvmap-dark.json/
+    // bvmap-starlight.json share the same 123 layer ids/order by design
+    // (the generator's structural gate), and MapLibre's default diff:true
+    // path tries a fine-grained update instead of a full teardown for that
+    // case — worth avoiding since it touches style-wide properties
+    // (sprite, glyphs), not just per-layer paint.
+    //
+    // Two heavier alternatives were tried and reverted: (1) diff:false
+    // plus a "switching" flag gated on the new style's "idle" event, which
+    // gets stuck true forever if "idle" never fires — every later click
+    // silently does nothing; (2) tearing down and recreating the whole Map
+    // (and its WebGL context) on every switch, which sidesteps MapLibre's
+    // internal setStyle state entirely but risks exhausting the browser's
+    // WebGL context budget after many switches in one session (observed
+    // during testing: the map stopped rendering until a full page reload).
+    // Plain setStyle(url, {diff:false}) with no extra state is the
+    // smallest change with the fewest new failure modes.
     map.setStyle(url, { diff: false });
     currentStyleURL = url;
     for (const b of panel.querySelectorAll("button")) {
