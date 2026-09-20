@@ -58,6 +58,11 @@ palette:
   # 鉄道トンネル・軌道(0025)。
   gray_113: "rgba(124,126,128,1)"  # 鉄道トンネル本体、地下鉄
   gray_30: "rgba(35,37,39,1)"  # 軌道(RailTrCL)、普通鉄道/特殊鉄道/路面の鉄道
+  # 陸水面・被覆面付随の線群(0008のクラスタ、0032のGroup A/B/D/E)専用。
+  # 生の値はgray_88と偶然同じだが、[0033](../docs/decisions/0033-new-token-policy.md)の
+  # 方針により独立トークンにした——このクラスタ内(水涯線・水部構造物線・
+  # 海岸線・河川中心線・地形表記線)で共有し、Anno側のgray_88とは連動させない。
+  gray_88_hydro: "rgba(92,93,95,1)"
 
 categories:
   building_fill:
@@ -434,13 +439,23 @@ patches:
 
   - id: bvmap-河川中心線人工水路地下
     base: {source: style/bvmap-dark.json, layer: bvmap-河川中心線人工水路地下}
-    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    literal_reason: >
+      陸水面・被覆面付随の線群(0008の順序体系⑤)。line-colorはstep式だが
+      出力が単純な値なのでstep_outputsでそのまま対応できる(0032のGroup D)。
+      zoom<16はgray_209(水域塗りと同じ「水」の意味領域——[0033](../docs/decisions/0033-new-token-policy.md)
+      が検証済み扱いとする例外)、zoom>=16はクラスタ専用のgray_88_hydro。
     known_pattern_pending: false
+    color_overrides:
+      line-color:
+        step_outputs: [gray_209, gray_88_hydro]
 
   - id: bvmap-河川中心線枯れ川部
     base: {source: style/bvmap-dark.json, layer: bvmap-河川中心線枯れ川部}
-    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。河川中心線人工水路地下と同じstep構造。"
     known_pattern_pending: false
+    color_overrides:
+      line-color:
+        step_outputs: [gray_209, gray_88_hydro]
 
   - id: bvmap-河川中心線
     base: {source: style/bvmap-dark.json, layer: bvmap-河川中心線}
@@ -449,8 +464,10 @@ patches:
 
   - id: bvmap-海岸線堤防等に接する部分破線
     base: {source: style/bvmap-dark.json, layer: bvmap-海岸線堤防等に接する部分破線}
-    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。単一値、gray_100(0010 §4の汎用トークン)で足りる。"
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
 
   - id: bvmap-水涯線
     base: {source: style/bvmap-dark.json, layer: bvmap-水涯線}
@@ -459,13 +476,18 @@ patches:
 
   - id: bvmap-水涯線堤防等に接する部分破線
     base: {source: style/bvmap-dark.json, layer: bvmap-水涯線堤防等に接する部分破線}
-    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。単一値、gray_100(0010 §4の汎用トークン)で足りる。"
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_100
 
   - id: bvmap-水部表記線polygon
     base: {source: style/bvmap-dark.json, layer: bvmap-水部表記線polygon}
-    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。fill-color/fill-outline-colorとも単一値、既存トークンで足りる。"
     known_pattern_pending: false
+    color_overrides:
+      fill-color: gray_255
+      fill-outline-color: gray_100
 
   - id: bvmap-水部表記線line
     base: {source: style/bvmap-dark.json, layer: bvmap-水部表記線line}
