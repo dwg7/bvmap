@@ -1,25 +1,23 @@
 """
-Stage 1 generator (reproduction-first): full 123-layer assembly.
+Full 123-layer assembly, and the generator's only writer of
+style/bvmap-starlight.json.
 
-The final Stage 1 gate (docs/decisions/0009, HANDOVER.md item 4): combine
-every mechanism proven so far into one 123-layer array and diff it against
-style/bvmap-dark.json layer-by-layer. This is an *integration* test, not
-just a copy — wherever a compiler has been proven (tier_template,
-category_table via load_input, road_color, building_color), this module
-actively substitutes its generated output in place of a literal copy, so a
-mismatch here means the compiler's output doesn't actually fit into the
-assembled whole, not just that the compiler passed its own narrow test.
+Originally the Stage 1 gate (docs/decisions/0009, 0019): combine every
+mechanism proven so far into one 123-layer array and diff it against
+style/bvmap-dark.json layer-by-layer, to prove the generated pieces
+actually fit into the assembled whole, not just pass their own narrow
+test. That reproduction-first phase is done (docs/decisions/0028) — 95
+of 123 layers are now generated/YAML-patched from
+generator/starlight-input.yaml, the rest carried over literal (see
+LITERAL_RANGES/LITERAL_ANNO_LAYERS below for exactly which ones and why).
 
-As of docs/decisions/0020, every color-bearing generated piece (Anno
-text-color/text-font, road color, building fill/outline, and 2 of the 3
-被覆面-dance patches) is driven from generator/starlight-input.yaml via
-generator/load_input.py, not from hardcoded Python constants — this is
-the code/YAML wiring the case conference asked for.
-
-Layers this module does NOT yet generate (46 of 123; 2 fewer than 0019's
-48, now that bvmap-行政区画/bvmap-水域 are YAML-driven patches) are carried
-over verbatim from style/bvmap-dark.json — see LITERAL_RANGES/
-LITERAL_ANNO_LAYERS below for exactly which ones and why.
+Starting with docs/decisions/0029, this script also WRITES the assembled
+style to style/bvmap-starlight.json on every run — the actual Starlight
+color polish work happens by editing starlight-input.yaml's palette and
+re-running this. Once the palette diverges from the reproduction
+defaults, the assembled style is *expected* to differ from
+style/bvmap-dark.json's content; only an id/order mismatch is still
+treated as a hard structural failure (see __main__ below).
 """
 import json
 
@@ -183,15 +181,21 @@ if __name__ == "__main__":
 
     assembled = [assembled_by_id[l["id"]] for l in layers]
 
-    mismatches = []
+    # id/order mismatches are always a real bug (assembled_by_id is keyed
+    # by the *original* ids, so this should be structurally impossible —
+    # kept as a hard check). Content differences from bvmap-dark.json are
+    # no longer a failure: once starlight-input.yaml's palette diverges
+    # from the reproduction defaults, generated layers are *supposed* to
+    # differ (docs/decisions/0029).
+    id_order_problems = []
+    content_diffs = []
     for g, o in zip(assembled, layers):
         if g["id"] != o["id"]:
-            mismatches.append(("id-order", g["id"], o["id"]))
+            id_order_problems.append((g["id"], o["id"]))
             continue
-        gs = json.dumps(g, sort_keys=True, ensure_ascii=False)
-        os_ = json.dumps(o, sort_keys=True, ensure_ascii=False)
-        if gs != os_:
-            mismatches.append((g["id"], gs[:200], os_[:200]))
+        if json.dumps(g, sort_keys=True, ensure_ascii=False) != \
+           json.dumps(o, sort_keys=True, ensure_ascii=False):
+            content_diffs.append(g["id"])
 
     # "literal" = no compiler/palette value actually drives this layer's
     # content yet. A patches entry with no applied color_overrides (e.g.
@@ -203,14 +207,27 @@ if __name__ == "__main__":
         + len(LITERAL_ANNO_LAYERS)
         + (len(patches) - len(patched_ids))
     )
-    if not mismatches:
-        print(
-            f"STAGE 1 FINAL GATE: PASS — all {len(assembled)} layers reproduced exactly, "
-            f"driven from generator/starlight-input.yaml. "
-            f"{literal_count} literal (not yet decomposed), "
-            f"{len(assembled) - literal_count} generated/YAML-patched."
-        )
+
+    if id_order_problems:
+        print(f"STRUCTURAL FAIL: {len(id_order_problems)} layer(s) assembled out of order "
+              f"or with a mismatched id — this should be impossible: {id_order_problems[:5]}")
     else:
-        print(f"STAGE 1 FINAL GATE: FAIL — {len(mismatches)} mismatches of {len(assembled)} layers")
-        for m in mismatches[:8]:
-            print(m)
+        with open("style/bvmap-starlight.json") as f:
+            current_starlight_name = json.load(f)["name"]
+
+        output_style = dict(style)
+        output_style["layers"] = assembled
+        output_style["name"] = current_starlight_name
+
+        with open("style/bvmap-starlight.json", "w") as f:
+            json.dump(output_style, f, ensure_ascii=False, indent=1)
+            f.write("\n")
+
+        print(
+            f"Wrote style/bvmap-starlight.json — {len(assembled)} layers, structurally sound "
+            f"(ids/order match bvmap-dark.json). {literal_count} literal, "
+            f"{len(assembled) - literal_count} generated/YAML-patched. "
+            f"{len(content_diffs)} layer(s) differ in content from bvmap-dark.json "
+            f"(expected once starlight-input.yaml's palette diverges from the reproduction "
+            f"defaults; 0 is expected only before any intentional color change)."
+        )
