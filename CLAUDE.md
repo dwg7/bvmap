@@ -55,7 +55,9 @@ issue自体はコメントの上クローズ済み。
   「見た目の改善」(配色そのもの、[0030](docs/decisions/0030-starlight-first-color-pass.md)で第一稿)と、
   「見えないところの改善」(expressionの近代化・性能/柔軟性の向上・
   `patches`のネイティブ生成への移行、[0031](docs/decisions/0031-expression-modernization-rgb-normalization.md)から開始)
-  を並行して進める方針
+  を並行して進める方針。スプライト(GSIアイコン119個)のグレースケール化にも着手
+  ([0036](docs/decisions/0036-sprite-grayscale-raster-exception.md)、`hfu/stars`側へ
+  「ラスタ例外」としてPRする前提、`sprite/`ディレクトリ参照)
 
 進め方の作法(探索的アプローチ・ケース・カンファレンス形式・ADR記録)は
 `docs/decisions/`に蓄積されている。次のセッションは`HANDOVER.md`も参照。
@@ -97,7 +99,12 @@ dwg7/bvmap/
 │   ├── category_table.py              # vt_code(等)対応表→match式のフラットコンパイラ
 │   ├── road_color.py / zl410_road_color.py / rail_tunnel_color.py / anno_symbol_color.py
 │   │                                   # 優先順位付きcase連鎖等、flat_matchでは表現できない構造
-│   └── building_color.py              # 検証用(実運用はcategory_table.py経由)
+│   ├── building_color.py              # 検証用(実運用はcategory_table.py経由)
+│   ├── cool_transform.py              # Starlightの配色変換式(0030)の実コード版
+│   └── sprite_grayscale.py            # スプライトのグレースケール化(0036)
+├── sprite/
+│   ├── std.png / std.json (+@2x)      # GSIオリジナルのスナップショット、無加工
+│   └── bvmap-starlight.png / .json (+@2x)  # sprite_grayscale.pyの生成結果
 ├── docs/
 │   └── decisions/                     # ADR(0001〜)。過去の調査・決定の一次情報源
 └── examples/
@@ -108,7 +115,8 @@ dwg7/bvmap/
 `style/bvmap-starlight.json`を配色調整したい場合は、このファイルを直接
 編集せず、`generator/starlight-input.yaml`のpaletteセクションを編集して
 `python3 generator/assemble.py`を実行すること(直接編集すると次回の
-`assemble.py`実行で上書きされる)。
+`assemble.py`実行で上書きされる)。同様に`sprite/bvmap-starlight.png`/`.json`も
+直接編集せず、`python3 generator/sprite_grayscale.py`を実行すること。
 
 ## 4. 作業分担
 

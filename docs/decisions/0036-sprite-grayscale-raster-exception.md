@@ -1,0 +1,75 @@
+# 0036: スプライトのグレースケール化、`hfu/stars`へのラスタ例外提案
+
+[0014](0014-sprite-decisions.md)で「今回は着手しない」と保留した独自スプライト作成のうち、
+最も軽い選択肢(既存GSIラスタの再配色、絵文字代替でもSDF再構築でもない)を実装した。
+保留条件だった「フォント・色の方針が固まってから」は、[0030](0030-starlight-first-color-pass.md)/[0033](0033-new-token-policy.md)で満たされている。
+
+## 実データで判明した食い違い
+
+`hfu/stars`の`assets/sprites.json`を確認したところ、明記された方針は
+「Sprites starsは`/sprite/{id}`で自前配信。Martinが起動時にSVGソースからスプライトシートを
+構築する——誰かのレンダリング済みPNGをミラーするのではなく、アイコンのSVGソースをコピーする」
+というものだった(フォントの自前ホスティングと同じ考え方)。実例の`positron`は、個々のSVG
+アイコンをupstreamのコミットハッシュ+sha256で検証してpinしている。
+
+GSIの119アイコンは個別SVGソースを持たず、結合済みラスタPNG1枚としてのみ公開されている
+([0014](0014-sprite-decisions.md)で確認済み、ライセンスも未確認のまま)。「レンダリング済み
+PNGはミラーしない」というhfu/starsの原則と真正面から食い違う。
+
+**判断(藤村さんの判断)**: GSIアイコンはこの原則の**ラスタ例外**として扱い、グレースケール化
+した単一PNGスプライトシートをそのまま静的ファイルとしてhfu/starsに置いてもらう。ベクター化
+(`potrace`等でSVGへ変換→`positron`方式に合わせる)は、トレース品質の検証・ライセンス確認・
+80アイコン分の作業量を考えると今回は見送り。
+
+## 副産物の訂正: `std@2x.png`は実在しない
+
+[0014](0014-sprite-decisions.md)は「`@2x`のpixelRatioバリアントが無く、高DPI環境でぼやける」
+と記録していたが、実際に`std@2x.png`を取得すると**HTTP 200を返す**。ただし中身は`std.png`と
+バイト単位で完全に同一(MD5一致)、`std@2x.json`も`std.json`と内容が同一(pixelRatio:1のまま)。
+つまり「存在しない」は不正確で、正しくは「**URLは存在するが、実体は@1xの複製であり、真の高
+解像度アセットではない**」。GSI側のプレースホルダーか意図的な措置かは不明。
+
+この動作を壊さないよう、生成物側も`bvmap-starlight@2x.png`/`.json`を`bvmap-starlight.png`/
+`.json`の単純な複製として用意した(MapLibreは端末のdevicePixelRatioに応じて`@2x`を要求し、
+404だとスプライト全体の読み込みに失敗することをローカル検証で確認済み——低DPI版だけでは
+不十分)。
+
+## 実装
+
+- **`generator/cool_transform.py`**: [0030](0030-starlight-first-color-pass.md)の
+  `cool_transform()`を初めて実コードとして切り出した(これまでADR本文と
+  [docs/bvmap-starlight-cartographic-design.md](../bvmap-starlight-cartographic-design.md)
+  に式が書かれているだけで、パレットトークンの値は手計算で`starlight-input.yaml`に転記されて
+  いた)。ドキュメントに書かれた4組の変換例(`gray_100`/`anno_29`/`gray_233`/`gray_161`)と
+  完全一致することを確認済み。
+- **`generator/sprite_grayscale.py`**: `sprite/std.png`(GSIオリジナルの無加工スナップショット、
+  `style/bvmap-dark.json`と同じ役割)を読み、各ピクセルを (1) ITU-R BT.601加重で輝度に落とし、
+  (2) `cool_transform()`に通す。アルファは無変更。`cool_transform()`自体はクリップしない(手
+  選定したパレットトークンには無関係だが、白に近いアイコンのピクセルでは255を超える)ため、
+  ベクトル化した経路では`[0,255]`にクリップし、`cool_transform()`を直接呼んだ結果も同じ範囲へ
+  クリップした上でランダム200ピクセルを突き合わせて一致を検証している。
+- 出力: `sprite/bvmap-starlight.png`/`.json`(+`@2x`複製)。アイコンの位置・サイズは変更して
+  いないため、JSON(座標)は`std.json`と同一内容。
+
+## 検証
+
+ローカルの`examples/style-preview.html`相当の環境で、`style/bvmap-starlight.json`の`sprite`
+フィールドだけを一時的にローカルの`sprite/bvmap-starlight`へ差し替えたスタイルを作り、ブラウザ
+で実際に読み込んで確認した(検証用ファイルはコミットしていない):
+
+- `map.hasImage('神社')`等でスプライトが実際に読み込まれたことを確認
+- 実タイル上で、GSIオリジナル(`bvmap-dark`、青色の「田」記号等)と比較し、同じ地物が中立
+  グレーで描画されることを確認。黒系のアイコン(卍の寺院記号等)は見た目上ほぼ変化しない
+  (`cool_transform`の設計上、暗い値ほど変化を抑える非対称brightenのため)
+
+## 現状と次
+
+`style/bvmap-starlight.json`の`sprite`フィールドはまだGSIの元URLのままで、切り替えていない
+——実際に`stars.optgeo.org`側でホストされ、最終URLが決まってから`assemble.py`側で配線する
+([0006](0006-hfu-stars-is-already-master-repo.md)のPRに合わせて)。
+
+- [ ] `hfu/stars`へ`sprite/bvmap-starlight.png`/`.json`(+`@2x`)を「ラスタ例外」として提案・PR
+- [ ] ホスト後、`style/bvmap-starlight.json`の`sprite`を実URLに切り替え
+- [ ] GSIアイコンのライセンス確認は[0014](0014-sprite-decisions.md)から引き続き未解決(グレー
+      スケール化した派生物にも同じ問題が及ぶ)
+- 未使用39個・`icon-size`固定値バグ([0014](0014-sprite-decisions.md))は今回もスコープ外のまま
