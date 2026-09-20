@@ -1,5 +1,5 @@
 {
- "glyphs": "https://gsi-cyberjapan.github.io/optimal_bvmap/glyphs/{fontstack}/{range}.pbf",
+ "glyphs": "https://stars.optgeo.org/font/{fontstack}/{range}",
  "sprite": "https://gsi-cyberjapan.github.io/optimal_bvmap/sprite/std",
  "sources": {
   "bvmap": {
@@ -16724,7 +16724,7 @@
      "vt_alti"
     ],
     "text-font": [
-     "NotoSansJP-Regular"
+     "Noto Sans JP Regular"
     ],
     "text-ignore-placement": true,
     "text-max-angle": 360,
@@ -16759,7 +16759,7 @@
      "vt_depth"
     ],
     "text-font": [
-     "NotoSansJP-Regular"
+     "Noto Sans JP Regular"
     ],
     "text-ignore-placement": true,
     "text-max-angle": 360,
@@ -17209,7 +17209,7 @@
      "vt_text"
     ],
     "text-font": [
-     "NotoSansJP-Regular"
+     "Noto Sans JP Regular"
     ],
     "text-justify": "auto",
     "text-max-width": 100,
@@ -18464,13 +18464,13 @@
      [
       "literal",
       [
-       "NotoSerifJP-SemiBold"
+       "Noto Serif JP SemiBold"
       ]
      ],
      [
       "literal",
       [
-       "NotoSansJP-Regular"
+       "Noto Sans JP Regular"
       ]
      ]
     ],
@@ -19906,13 +19906,13 @@
      [
       "literal",
       [
-       "NotoSerifJP-SemiBold"
+       "Noto Serif JP SemiBold"
       ]
      ],
      [
       "literal",
       [
-       "NotoSansJP-Regular"
+       "Noto Sans JP Regular"
       ]
      ]
     ],
@@ -21286,13 +21286,13 @@
      [
       "literal",
       [
-       "NotoSerifJP-SemiBold"
+       "Noto Serif JP SemiBold"
       ]
      ],
      [
       "literal",
       [
-       "NotoSansJP-Regular"
+       "Noto Sans JP Regular"
       ]
      ]
     ],
@@ -22315,13 +22315,13 @@
      [
       "literal",
       [
-       "NotoSerifJP-SemiBold"
+       "Noto Serif JP SemiBold"
       ]
      ],
      [
       "literal",
       [
-       "NotoSansJP-Regular"
+       "Noto Sans JP Regular"
       ]
      ]
     ],
@@ -23903,13 +23903,13 @@
      [
       "literal",
       [
-       "NotoSerifJP-SemiBold"
+       "Noto Serif JP SemiBold"
       ]
      ],
      [
       "literal",
       [
-       "NotoSansJP-Regular"
+       "Noto Sans JP Regular"
       ]
      ]
     ],
@@ -25455,13 +25455,13 @@
      [
       "literal",
       [
-       "NotoSerifJP-SemiBold"
+       "Noto Serif JP SemiBold"
       ]
      ],
      [
       "literal",
       [
-       "NotoSansJP-Regular"
+       "Noto Sans JP Regular"
       ]
      ]
     ],
@@ -26968,13 +26968,13 @@
      [
       "literal",
       [
-       "NotoSerifJP-SemiBold"
+       "Noto Serif JP SemiBold"
       ]
      ],
      [
       "literal",
       [
-       "NotoSansJP-Regular"
+       "Noto Sans JP Regular"
       ]
      ]
     ],

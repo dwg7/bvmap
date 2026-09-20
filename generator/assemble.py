@@ -27,6 +27,7 @@ from tier_template import extract_templates, generate_tier_block, KNOWN_TIER4_AN
 from category_table import SHARED_TEXT_COLOR_LAYERS
 from load_input import (
     load, build_categories, build_priority_chains, build_patches, build_standalone_layers,
+    remap_font_names,
 )
 
 # 7 of the 9 Anno layers share the text-font water/coastal split — 2 more
@@ -191,6 +192,24 @@ if __name__ == "__main__":
         output_style = dict(style)
         output_style["layers"] = assembled
         output_style["name"] = current_starlight_name
+
+        # hosting: (docs/decisions/0036) overrides style-level properties that
+        # bvmap-dark.json still points at GSI for. Omitted keys pass GSI's
+        # original value through unchanged.
+        hosting = config.get("hosting", {})
+        for key in ("glyphs", "sprite"):
+            if key in hosting:
+                output_style[key] = hosting[key]
+
+        # A style's glyphs endpoint is style-wide — if we're switching it,
+        # every layer's layout.text-font literal has to resolve against the
+        # new host, not just the ones categories.anno_text_font generates.
+        font_names = hosting.get("font_names", {})
+        if font_names:
+            for layer in output_style["layers"]:
+                tf = layer.get("layout", {}).get("text-font")
+                if tf is not None:
+                    layer["layout"]["text-font"] = remap_font_names(tf, font_names)
 
         with open("style/bvmap-starlight.json", "w") as f:
             json.dump(output_style, f, ensure_ascii=False, indent=1)

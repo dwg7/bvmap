@@ -56,8 +56,9 @@ issue自体はコメントの上クローズ済み。
   「見えないところの改善」(expressionの近代化・性能/柔軟性の向上・
   `patches`のネイティブ生成への移行、[0031](docs/decisions/0031-expression-modernization-rgb-normalization.md)から開始)
   を並行して進める方針。スプライト(GSIアイコン119個)のグレースケール化にも着手
-  ([0036](docs/decisions/0036-sprite-grayscale-raster-exception.md)、`hfu/stars`側へ
-  「ラスタ例外」としてPRする前提、`sprite/`ディレクトリ参照)
+  ([0036](docs/decisions/0036-sprite-grayscale-raster-exception.md)、`sprite/`ディレクトリ参照)。
+  `glyphs`は`stars.optgeo.org`自前配信へ切り替え済み([0037](docs/decisions/0037-glyphs-hosting-switch.md))。
+  `sprite`もホストURLが決まり次第同様に切り替える(`starlight-input.yaml`の`hosting:`セクション)
 
 進め方の作法(探索的アプローチ・ケース・カンファレンス形式・ADR記録)は
 `docs/decisions/`に蓄積されている。次のセッションは`HANDOVER.md`も参照。

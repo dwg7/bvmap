@@ -236,6 +236,22 @@ def apply_step_outputs(expr, tokens, palette):
     return new_expr
 
 
+def remap_font_names(node, font_map):
+    """Recursively replaces literal font-family strings anywhere inside a
+    text-font layout value (docs/decisions/0036). A style's glyphs endpoint
+    is style-wide, so switching it (hosting.glyphs) means *every* text-font
+    literal must resolve against the new host — not just the ones
+    categories.anno_text_font already generates. text-font can be a plain
+    ["FamilyA", "FamilyB"] array or a nested match/case/step expression with
+    such arrays as leaf values, so this walks lists rather than assuming a
+    fixed shape."""
+    if isinstance(node, list):
+        return [remap_font_names(x, font_map) for x in node]
+    if isinstance(node, str) and node in font_map:
+        return font_map[node]
+    return node
+
+
 def build_patches(config, by_id):
     """patches: <id> -> literal-copied layer from its base, with
     color_overrides applied as top-level paint-property assignments only.
@@ -355,9 +371,13 @@ if __name__ == "__main__":
 
     # Since docs/decisions/0030's color polish, most of these checks are
     # *expected* to differ from bvmap-dark.json (that's the point) — only
-    # the color-independent ones (font names, numeric widths) still have
-    # to match byte-exact. Mirrors assemble.py's own 0029 reframing.
-    STRUCTURAL_CHECKS = {"building_outline_width", "anno_text_font"}
+    # the color-independent ones (numeric widths) still have to match
+    # byte-exact. anno_text_font moved out of this set in docs/decisions/0036:
+    # it now names stars.optgeo.org's self-hosted font family strings
+    # ("Noto Sans JP Regular") instead of GSI's original literal ("NotoSansJP-
+    # Regular") — same typeface, deliberately different string, so it's
+    # expected to diverge too. Mirrors assemble.py's own 0029 reframing.
+    STRUCTURAL_CHECKS = {"building_outline_width"}
 
     mismatches = []
     diverged = []

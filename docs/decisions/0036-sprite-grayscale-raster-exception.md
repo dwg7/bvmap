@@ -73,3 +73,22 @@ PNGはミラーしない」というhfu/starsの原則と真正面から食い�
 - [ ] GSIアイコンのライセンス確認は[0014](0014-sprite-decisions.md)から引き続き未解決(グレー
       スケール化した派生物にも同じ問題が及ぶ)
 - 未使用39個・`icon-size`固定値バグ([0014](0014-sprite-decisions.md))は今回もスコープ外のまま
+
+## 訂正(2026-09-20、`stars`セッションからの報告、`/catalog`で自分でも裏取り済み)
+
+「ラスタ例外」は不要だった。`stars`セッションが同日中に回避策を実装・検証済み: GSIの
+`std.json`の座標で`std.png`から各アイコンを切り出し、**そのPNGをdata URIとしてSVGへ埋め込む**。
+Martinはそのsvgからシートを焼くため、`assets/sprites.json`の「SVGソース+Martin焼成」方針を
+崩さずに済む。resveがembedded rasterをそのまま描くため、焼いたシートは元のラスタとピクセル
+単位で完全一致することを`stars`側で119/119検証済み(SDFフラグは0件、ラスタ埋め込みでも意味が
+変わる箇所がないため)。`bvmap-starlight`側のグレースケール版(119アイコン・1024×1024・SDF0件・
+`@2x`が`@1x`とバイト単位で同一)も同じ性質のため、同じ経路にそのまま乗る。
+
+本番のMartin設定には現在`sprites: {"positron": {...}}`の1件のみ登録されている
+(`https://stars.optgeo.org/catalog`で確認、フォント12・スタイル7も一致)。GSIアイコン
+(`optimal-bvmap`)は配置済みで、Martin再起動の承認待ち。想定URLは
+`https://stars.optgeo.org/sprite/bvmap-starlight`。
+
+残る手続き論点: hfu/starsのスタイル受け入れ規約は「hfu/starsへのPR」が入口だが、今回は
+「dwg7/bvmap側のファイルをstars側でコピーする」形になるため、この経路を使ってよいか
+藤村さんに確認中([0037](0037-glyphs-hosting-switch.md)参照)。

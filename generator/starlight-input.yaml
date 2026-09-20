@@ -21,6 +21,9 @@
 #   - patches: 「リテラル保持」層。生JSONを埋め込まず、bvmap-dark.jsonの
 #     該当レイヤーをbaseとして、①なぜliteralか ②既知パターンが未解明の
 #     まま残っているか ③色だけpalette参照に差し替える、の3点だけを書く。
+#   - hosting: bvmap-dark.jsonから継承せず上書きするトップレベルのスタイル
+#     プロパティ(glyphs/sprite)。値が定まっていない間はそのキー自体を
+#     省略し、GSI原本の値を素通しする(assemble.py参照)。
 
 palette:
   # 各トークンの由来(ADR参照)をコメントに残す。「なぜこの値か」を将来の
@@ -180,8 +183,11 @@ categories:
       # text-colorのwater_coastal(上記)より3コード多い(342/347/842、海岸・
       # 浜・半島系)——フォントでは明朝体扱いだが、色ではdefault(黒)に落ちる
       # (0017で確認済み)。
-      water_coastal: {codes: [321, 322, 341, 342, 344, 345, 347, 820, 840, 841, 842], value: "NotoSerifJP-SemiBold"}
-    default: "NotoSansJP-Regular"
+      # 値はstars.optgeo.org自前配信のフォント名(Martinがフォント内部の
+      # 名前で命名するため、GSI原文の"NotoSerifJP-SemiBold"/"NotoSansJP-
+      # Regular"とは表記が異なる。書体・ウェイトは同一、0036参照)。
+      water_coastal: {codes: [321, 322, 341, 342, 344, 345, 347, 820, 840, 841, 842], value: "Noto Serif JP SemiBold"}
+    default: "Noto Sans JP Regular"
 
   # bvmap-注記道路番号(0027)。当初「共有パターン無し」と誤分類していたが、
   # 実際はただの小さいflat_match(vt_code 7701=水面標高だけ黒、それ以外の
@@ -644,3 +650,18 @@ patches:
     base: {source: style/bvmap-dark.json, layer: bvmap-水部表記線point}
     literal_reason: "アイコンのみのシンボルレイヤー(流水方向)。色を持たないため移行対象外。"
     known_pattern_pending: false
+
+hosting:
+  # stars.optgeo.orgの自前フォント配信([0036](../docs/decisions/0036-sprite-grayscale-raster-exception.md)、
+  # {fontstack}/{range}は.pbf拡張子なし、URLパターンは実データで確認済み)。
+  # spriteはまだ未定(グレースケール版の本番ホスティング方法をhfu/stars側で
+  # 検討中)のため、キー自体を省略しGSI原本のURLを素通しする。
+  glyphs: "https://stars.optgeo.org/font/{fontstack}/{range}"
+  # categories.anno_text_fontが生成しない層(等高線数値部・等深線数値部・
+  # 注記道路番号)にも、bvmap-dark.json由来の生フォント名がlayout.text-font
+  # としてそのまま残っている。glyphsを切り替えるなら全層で一貫させる必要が
+  # あるため、assemble.pyの最後でスタイル全体のtext-fontに適用する
+  # (generator/load_input.py の remap_font_names())。
+  font_names:
+    "NotoSansJP-Regular": "Noto Sans JP Regular"
+    "NotoSerifJP-SemiBold": "Noto Serif JP SemiBold"
