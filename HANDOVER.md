@@ -16,10 +16,10 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STAR
    - `generator/tier_template.py`: 道路・鉄道・建物の複合ティア構造。65/70完全一致([0016](docs/decisions/0016-tier-generator-stage1.md))
    - `generator/category_table.py`: 定数解決コンパイラ。注記の濃淡ランプ・フォント分岐で完全一致([0017](docs/decisions/0017-category-table-generator-stage1.md))
 
-## 次にやること(未着手、優先順)
+## 次にやること(優先順)
 
 1. **`bvmap-注記シンボル付きソート順100以上/100未満`の`let`包装パターンの解明**。同じ基本テーブルを`let`で包み、2レイヤー間にわずかな差分がある(text-sizeのズーム14例外と同種と推測、未検証)。[0017](docs/decisions/0017-category-table-generator-stage1.md)の「未検証」節参照
-2. **道路の`vt_rdctg`駆動色([0010](docs/decisions/0010-color-semantic-categories.md))と建物の塗り/輪郭**を、カテゴリ表コンパイラで再現できるか検証
+2. ~~道路の`vt_rdctg`駆動色と建物の塗り/輪郭を、カテゴリ表コンパイラで再現できるか検証~~ **完了(2026-09-20)**: 建物は`compile_match_expression()`で無改造再現([0010](docs/decisions/0010-color-semantic-categories.md)の元の仮説通り)。道路色は同じコンパイラでは再現できず、専用の優先順位付きcase連鎖(`generator/road_color.py`)が必要と判明——さらに[0010](docs/decisions/0010-color-semantic-categories.md)の道路色の表自体に誤りがあり、[0018](docs/decisions/0018-road-color-not-flat-category-compiler.md)で訂正済み
 3. **残りの個別レイヤー**(background/AdmArea/WA、Cntr/Isbt、WStrA/WStrL、SpcfArea等)は、共有テーブル化せず、リテラル保持([0009](docs/decisions/0009-generator-architecture-direction.md)の「逃げ場」原則)で組み込む設計を詰める
 4. 1〜3が揃ったら、**全123レイヤーを組み立てて`bvmap-dark.json`と完全一致するか検証**(Stage 1の最終ゲート)
 5. Stage 1が通ったら、**実際に`bvmap-starlight`の配色をStarlightの方向性(低彩度・明るめ・銀灰色寄り)へ磨き上げる**作業(まだ着手していない、これが本来の目的)
