@@ -38,14 +38,17 @@ SHARED_TEXT_FONT_LAYERS = SHARED_TEXT_COLOR_LAYERS + [
     "bvmap-注記シンボル付きソート順100未満",
 ]
 
-# Layers carried over verbatim, with the reason grouped by range (docs/
-# decisions/0009's escape hatch). None of these have a compiler yet;
-# each is a candidate for its own case-conference slot later. (2 of these
-# 23 — bvmap-行政区画/bvmap-水域 — get overwritten by YAML patches below;
-# they stay listed here as the literal fallback if a patch is ever removed.)
+# Layers carried over verbatim by raw position (docs/decisions/0009's
+# escape hatch). Layers 0-22 (background/AdmArea/WA/terrain/hydrography/
+# boundaries/contours) used to live here too, but every one of them now
+# has an explicit by-id patches entry in starlight-input.yaml (docs/
+# decisions/0008's role annotations, even where color isn't decomposed
+# yet) — addressing by id there instead of by position here is strictly
+# safer against an upstream bvmap-dark.json reorder (docs/decisions/0020's
+# review flagged this fragility). What's left here still has no YAML
+# representation at all and is a candidate for its own case-conference
+# slot later.
 LITERAL_RANGES = {
-    "background/AdmArea/WA/terrain/hydrography/boundaries/contours (layers 0-22)":
-        list(range(0, 23)),
     "ZL4-10 low-zoom overview (layers 23-25, excluded from the tier block by design)":
         [23, 24, 25],
     "post-tier individual layers (dashed roads, tunnels, structures, power lines, etc., 96-113)":
@@ -123,7 +126,7 @@ if __name__ == "__main__":
     config = load()
     categories = build_categories(config)
     chains = build_priority_chains(config)
-    patches = build_patches(config, by_id)
+    patches, patched_ids = build_patches(config, by_id)
 
     assembled_by_id = {}
 
@@ -159,8 +162,15 @@ if __name__ == "__main__":
         if gs != os_:
             mismatches.append((g["id"], gs[:200], os_[:200]))
 
+    # "literal" = no compiler/palette value actually drives this layer's
+    # content yet. A patches entry with no applied color_overrides (e.g.
+    # the 0008-annotated group awaiting its own color investigation) is
+    # still literal in that sense, even though it's now addressed by id
+    # in the YAML rather than by LITERAL_RANGES's raw position.
     literal_count = (
-        sum(len(v) for v in LITERAL_RANGES.values()) + len(LITERAL_ANNO_LAYERS) - len(patches)
+        sum(len(v) for v in LITERAL_RANGES.values())
+        + len(LITERAL_ANNO_LAYERS)
+        + (len(patches) - len(patched_ids))
     )
     if not mismatches:
         print(

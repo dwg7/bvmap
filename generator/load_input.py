@@ -130,6 +130,11 @@ def build_patches(config, by_id):
     couldn't tell the two apart)."""
     palette = config["palette"]
     out = {}
+    patched_ids = set()  # ids where an override actually changed something,
+                          # as opposed to a patch that's purely structural
+                          # annotation (base copy + literal_reason, no
+                          # color_overrides yet) — see assemble.py's
+                          # literal_count, which needs this distinction.
     for entry in config.get("patches", []):
         lid = entry["id"]
         base_layer = by_id[entry["base"]["layer"]]
@@ -141,6 +146,7 @@ def build_patches(config, by_id):
                 continue  # not a property on this layer at all; left as literal
             if isinstance(override, dict) and "step_outputs" in override:
                 layer["paint"][prop] = apply_step_outputs(paint[prop], override["step_outputs"], palette)
+                patched_ids.add(lid)
             elif isinstance(paint[prop], list):
                 raise ValueError(
                     f"patch {lid!r}: color_overrides.{prop} targets a MapLibre expression "
@@ -151,9 +157,10 @@ def build_patches(config, by_id):
                 )
             else:
                 layer["paint"][prop] = resolve(override, palette)
+                patched_ids.add(lid)
 
         out[lid] = layer
-    return out
+    return out, patched_ids
 
 
 if __name__ == "__main__":
@@ -165,7 +172,7 @@ if __name__ == "__main__":
 
     categories = build_categories(config)
     chains = build_priority_chains(config)
-    patches = build_patches(config, by_id)
+    patches, _patched_ids = build_patches(config, by_id)
 
     checks = [
         ("building_fill", categories["building_fill"], by_id["bvmap-建築物0"]["paint"]["fill-color"]),

@@ -205,3 +205,112 @@ patches:
       # (generator/load_input.pyのapply_step_outputs()参照)。
       background-color:
         step_outputs: [gray_255, gray_209, gray_255]
+
+  # 以下20層は、docs/decisions/0008(地図学的レイヤー順序体系)で役割は
+  # 確定済みだが、色の対応表はまだ検証していない——ここでは「なぜ・どの
+  # 役割の層か」だけをADR 0008から反映し、color_overridesは書かない(色を
+  # 検証もせずpalette化すると、それこそ捏造になる)。Starlightの配色磨き
+  # 上げの中で、この群を1つずつ実データ検証してから埋める。
+
+  - id: bvmap-地形表記面
+    base: {source: style/bvmap-dark.json, layer: bvmap-地形表記面}
+    literal_reason: "被覆面(0008の順序体系④)。fill-colorはvt_code 7401/7402/7403の3分岐+透明default——他レイヤーと共有しない独立テーブル。"
+    known_pattern_pending: false
+
+  - id: bvmap-地形表記線
+    base: {source: style/bvmap-dark.json, layer: bvmap-地形表記線}
+    literal_reason: "被覆面付随の線(0008の順序体系④/⑤、独立ロジック)。"
+    known_pattern_pending: false
+
+  - id: bvmap-水部構造物面
+    base: {source: style/bvmap-dark.json, layer: bvmap-水部構造物面}
+    literal_reason: "被覆面付随(0008の順序体系④/⑤、独立ロジック)。"
+    known_pattern_pending: false
+
+  - id: bvmap-水部構造物線
+    base: {source: style/bvmap-dark.json, layer: bvmap-水部構造物線}
+    literal_reason: "被覆面付随(0008の順序体系④/⑤、独立ロジック)。"
+    known_pattern_pending: false
+
+  - id: bvmap-海岸線
+    base: {source: style/bvmap-dark.json, layer: bvmap-海岸線}
+    literal_reason: >
+      陸水面・被覆面付随の線群(0008の順序体系⑤)。このデータセットでは
+      独立した段になっておらず③④と混在する(0008で確認済み)。
+    known_pattern_pending: false
+
+  - id: bvmap-河川中心線人工水路地下
+    base: {source: style/bvmap-dark.json, layer: bvmap-河川中心線人工水路地下}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: bvmap-河川中心線枯れ川部
+    base: {source: style/bvmap-dark.json, layer: bvmap-河川中心線枯れ川部}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: bvmap-河川中心線
+    base: {source: style/bvmap-dark.json, layer: bvmap-河川中心線}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: bvmap-海岸線堤防等に接する部分破線
+    base: {source: style/bvmap-dark.json, layer: bvmap-海岸線堤防等に接する部分破線}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: bvmap-水涯線
+    base: {source: style/bvmap-dark.json, layer: bvmap-水涯線}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: bvmap-水涯線堤防等に接する部分破線
+    base: {source: style/bvmap-dark.json, layer: bvmap-水涯線堤防等に接する部分破線}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: bvmap-水部表記線polygon
+    base: {source: style/bvmap-dark.json, layer: bvmap-水部表記線polygon}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: bvmap-水部表記線line
+    base: {source: style/bvmap-dark.json, layer: bvmap-水部表記線line}
+    literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
+    known_pattern_pending: false
+
+  - id: "bvmap-行政区画界線25000所属界（所属を明示する境界線）"
+    base: {source: style/bvmap-dark.json, layer: "bvmap-行政区画界線25000所属界（所属を明示する境界線）"}
+    literal_reason: "行政区画線(0008の順序体系⑥)。道路群の直前に位置する独立層。"
+    known_pattern_pending: false
+
+  - id: bvmap-行政区画界線25000市区町村界
+    base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線25000市区町村界}
+    literal_reason: "行政区画線(0008の順序体系⑥)。"
+    known_pattern_pending: false
+
+  - id: bvmap-行政区画界線25000都府県界及び北海道総合振興局・振興局界
+    base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線25000都府県界及び北海道総合振興局・振興局界}
+    literal_reason: "行政区画線(0008の順序体系⑥)。"
+    known_pattern_pending: false
+
+  - id: bvmap-行政区画界線地方界
+    base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線地方界}
+    literal_reason: "行政区画線(0008の順序体系⑥)。"
+    known_pattern_pending: false
+
+  - id: bvmap-行政区画界線国の所属界
+    base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線国の所属界}
+    literal_reason: "行政区画線(0008の順序体系⑥)。他の行政区画界線と違いgray_35ではなくgray_27——未検証の差異。"
+    known_pattern_pending: true
+    known_pattern_note: "同じ行政区画線グループの中で1レイヤーだけ色が違う理由は未調査。"
+
+  - id: bvmap-等高線
+    base: {source: style/bvmap-dark.json, layer: bvmap-等高線}
+    literal_reason: "等高線・等深線(0008の順序体系⑦)。"
+    known_pattern_pending: false
+
+  - id: bvmap-等深線
+    base: {source: style/bvmap-dark.json, layer: bvmap-等深線}
+    literal_reason: "等高線・等深線(0008の順序体系⑦)。"
+    known_pattern_pending: false
