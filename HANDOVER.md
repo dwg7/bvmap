@@ -34,11 +34,13 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STAR
    - **残り**: tierブロック後の残り9層(一回性でリテラル保持のままで良いと判断済み)
 6. **次はここ**: Stage 1のカラー生成に関する探索・実装が一区切りついた(注記9層中8層・全体で95/123層が生成済み)。実際に`bvmap-starlight`の配色をStarlightの方向性(低彩度・明るめ・銀灰色寄り)へ磨き上げる(まだ着手していない、これが本来の目的)——今は`generator/starlight-input.yaml`のpaletteセクションを差し替えるだけで配色が変わる状態になっている。⑤で追加した20層(陸水面・行政区画線等)の色検証も、この磨き上げ作業の一部として行う
 7. `hfu/stars`へのPR作成([0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md))
+8. [docs/bvmap-starlight-cartographic-design.md](docs/bvmap-starlight-cartographic-design.md)を新規執筆(2026-09-20、Fableサブエージェント起案+セッション内で査読・加筆)。地図技術者向けに、GSI `bvmap-dark`から帰納した地図学的知識を`starlight-input.yaml`と同期させてまとめた読み物。ADR一次記録の集約版として、新セッションの起点に使える
 
 ## 未解決のまま保留中の判断
 
 - `font-faces`(自前フォントホスティング)は[0011](docs/decisions/0011-font-implementation-method.md)で保留。将来のMapLibreネイティブ縦書き対応([0004](docs/decisions/0004-vertical-choonpu-workaround-does-not-work.md)のPR #8399等)が`font-faces`前提でマージされたら再検討
 - スプライト(独自SDF・絵文字代替)は[0014](docs/decisions/0014-sprite-decisions.md)で全て見送り。着手条件はADR参照
+- **TODO(2026-09-20、藤村さんの指示)**: 複数の沿岸タイル(小樽沖以外)で`WA`/`AdmArea`の包含関係を実タイルで再検証する。小樽沖タイルでは100%内包が確認されているが、タイルによって異なりうると[0008](docs/decisions/0008-cartographic-layer-ordering.md)が留保している
 - **(2026-09-20、`stars`セッションからの共有、未検証・未対応)** `hfu/stars`がglyphを自前配信するようになった(`https://stars.optgeo.org/font/{fontstack}/{range}`、`.pbf`無し、Martinがフォントファイルから生成)。それに伴い`hfu/stars`側の`styles/`ではフォント名が変わった(例: `NotoSansJP-Regular`→`Noto Sans JP Regular`、Martinがフォント内部のファミリ名で命名するため)。**本リポジトリの`style/bvmap-starlight.json`の`glyphs`は今もGSI直参照(`gsi-cyberjapan.github.io/optimal_bvmap/glyphs/...`)のままで、この変更の影響を受けていないことを確認済み**([0007](docs/decisions/0007-real-font-names-bypass-local-restriction.md)の実フォント名直書き方式も無関係)。将来`glyphs`を`stars.optgeo.org`側に切り替える判断をする場合にのみ、フォント名の対応関係を再確認すること
 
 ## セッションの作法(重要、次のセッションも踏襲すること)

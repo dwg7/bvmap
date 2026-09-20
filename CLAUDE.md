@@ -10,6 +10,13 @@
 [0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md)は
 本プロジェクトの現在の目標を理解する上で必須です。
 
+ADRが「経緯・判断の一次記録」であるのに対し、[docs/bvmap-starlight-cartographic-design.md](docs/bvmap-starlight-cartographic-design.md)は
+地図技術者向けに書いた「結果として何を設計したか」の読み物です。GSI
+`bvmap-dark` から帰納した地図学的知識(レイヤー順序体系、陸海の3層メヌエット、
+道路・鉄道・建物のティア構造、色の意味体系等)を、`starlight-input.yaml`
+と同期させてまとめています。新しいセッションで全体像を素早く掴みたい時は
+ADRを1つずつ読むより先にこちらが役立ちます。
+
 姉妹プロジェクト: [dwg7/kaga0](https://claude.ai/kaga0/CLAUDE.md)、
 [dwg7/zukaku](https://claude.ai/zukaku/CLAUDE.md)(同じ「実装より先に調査」
 という作法を踏襲)
