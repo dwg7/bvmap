@@ -25,7 +25,10 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STAR
 3. ~~残りの個別レイヤーの共有テーブル化せずリテラル保持で組み込む設計~~ **完了(2026-09-20)**: `generator/assemble.py`がリテラル保持で組み込み、[0019](docs/decisions/0019-stage1-final-assembly.md)に範囲と理由を記録
 4. ~~全123レイヤーを組み立てて`bvmap-dark.json`と完全一致するか検証~~ **完了(2026-09-20、[0019](docs/decisions/0019-stage1-final-assembly.md))**: `generator/assemble.py`でPASS。Stage 1(reproduction-first generator)完了
 5. ~~YAML入力(`sample-starlight-input.yaml`)からの配線~~ **完了(2026-09-20、[0020](docs/decisions/0020-yaml-wiring-stage1.md))**: `generator/starlight-input.yaml` + `generator/load_input.py`。コードレビュー([0020](docs/decisions/0020-yaml-wiring-stage1.md)追記)で3件修正、backgroundのstep式patchも`apply_step_outputs()`で解決し、被覆面ダンス3層は全てpalette駆動
-6. ~~123レイヤーカバーの拡大~~ **一部着手(2026-09-20、[0021](docs/decisions/0021-patches-by-id-coverage-expansion.md))**: [0008](docs/decisions/0008-cartographic-layer-ordering.md)で役割確定済みの20層(陸水面・被覆面付随の線群、行政区画線、等高線・等深線)を`patches`にid参照で追加(色は未検証、注釈のみ)。方針: 123カバーを至上命題にせず、既に検討済みの知見がある層から反映する。残り: ZL4-10(3層)・tierブロック後の個別レイヤー(18層)・注記の一部(4層)は、まだ0008レベルの役割確定すら済んでいない
+6. 123レイヤーカバーの拡大、継続中。方針: 123カバーを至上命題にせず、既に検討済みの知見がある層から反映する
+   - **完了(2026-09-20、[0021](docs/decisions/0021-patches-by-id-coverage-expansion.md))**: [0008](docs/decisions/0008-cartographic-layer-ordering.md)で役割確定済みの20層(陸水面・被覆面付随の線群、行政区画線、等高線・等深線)を`patches`にid参照で追加(色は未検証、注釈のみ)。backgroundのstep式patchも解決
+   - **完了(2026-09-20、[0022](docs/decisions/0022-zl4-10-and-post-tier-layers-footprint.md)/[0023](docs/decisions/0023-structure-and-contour-layers-implemented.md))**: ZL4-10・tierブロック後の個別18層を踏み跡調査([0022](docs/decisions/0022-zl4-10-and-post-tier-layers-footprint.md))。うち構造物3層・等高線/等深線+数値部4層を実装([0023](docs/decisions/0023-structure-and-contour-layers-implemented.md))——構造物は新設した`layers: engine: standalone`でYAML駆動、等高線/等深線は数値部とpaletteトークンを共有するよう統一。副産物: `layers:`セクションのtier_templateエントリが実はコードから未使用(ドキュメントのみ)だったと判明
+   - **残り**: ZL4-10(専用の優先順位連鎖が必要、モジュール新設 vs リテラル保持は未決定)、軌道2層の色分け非対称性(GSI地物コード表との突き合わせ必要、保留)、tierブロック後の残り13層(送電線・道路縁等の一回性装飾)、注記の一部4層
 7. **次はここ**: 実際に`bvmap-starlight`の配色をStarlightの方向性(低彩度・明るめ・銀灰色寄り)へ磨き上げる(まだ着手していない、これが本来の目的)——今は`generator/starlight-input.yaml`のpaletteセクションを差し替えるだけで配色が変わる状態になっている。⑥で追加した20層の色検証も、この磨き上げ作業の一部として行う
 7. `hfu/stars`へのPR作成([0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md))
 

@@ -25,7 +25,9 @@ import json
 
 from tier_template import extract_templates, generate_tier_block, KNOWN_TIER4_ANOMALIES
 from category_table import SHARED_TEXT_COLOR_LAYERS
-from load_input import load, build_categories, build_priority_chains, build_patches
+from load_input import (
+    load, build_categories, build_priority_chains, build_patches, build_standalone_layers,
+)
 
 # 7 of the 9 Anno layers share the text-font water/coastal split — 2 more
 # than share text-color (docs/decisions/0017's unresolved let-wrapped
@@ -48,11 +50,18 @@ SHARED_TEXT_FONT_LAYERS = SHARED_TEXT_COLOR_LAYERS + [
 # review flagged this fragility). What's left here still has no YAML
 # representation at all and is a candidate for its own case-conference
 # slot later.
+# 5 of the original 18 post-tier layers (indices 106-108, 112-113: docs/
+# decisions/0022) now have their own YAML representation instead:
+# bvmap-構造物面/構造物線 are `layers: engine: standalone` entries (real
+# vt_code match tables); bvmap-構造物面の外周線/bvmap-等高線数値部/
+# bvmap-等深線数値部 are `patches` with a resolved color_overrides.
+# Excluded here by index so they aren't double-assigned.
 LITERAL_RANGES = {
     "ZL4-10 low-zoom overview (layers 23-25, excluded from the tier block by design)":
         [23, 24, 25],
-    "post-tier individual layers (dashed roads, tunnels, structures, power lines, etc., 96-113)":
-        list(range(96, 114)),
+    "post-tier individual layers (dashed roads, tunnels, power lines, etc., 96-113 "
+    "minus the 5 now covered by standalone/patches — see docs/decisions/0022)":
+        [i for i in range(96, 114) if i not in (106, 107, 108, 112, 113)],
 }
 
 # The 2 let-wrapped symbol-attached Anno layers (docs/decisions/0017's
@@ -127,6 +136,7 @@ if __name__ == "__main__":
     categories = build_categories(config)
     chains = build_priority_chains(config)
     patches, patched_ids = build_patches(config, by_id)
+    standalone = build_standalone_layers(config, by_id, categories, chains)
 
     assembled_by_id = {}
 
@@ -136,9 +146,15 @@ if __name__ == "__main__":
 
     # YAML-driven patches (docs/decisions/0020) override the literal copy
     # for the subset of "literal" layers that do have a resolved color
-    # override (bvmap-行政区画/bvmap-水域; background's is left un-applied
-    # by build_patches() itself — see starlight-input.yaml's note).
+    # override (background's step-expression is now handled too — docs/
+    # decisions/0021 — while the 0008-annotated group added in 0021/0022
+    # mostly still has no color_overrides and stays literal).
     for lid, layer in patches.items():
+        assembled_by_id[lid] = layer
+
+    # engine: standalone layers (docs/decisions/0022) — real vt_code match
+    # tables for layers outside the tier structure (bvmap-構造物面/構造物線).
+    for lid, layer in standalone.items():
         assembled_by_id[lid] = layer
 
     for layer in build_tier_block(by_id, categories, chains):

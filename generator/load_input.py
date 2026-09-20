@@ -94,6 +94,40 @@ def build_priority_chains(config):
     return out
 
 
+def resolve_from_ref(ref, categories, chains):
+    """Resolves a {from: "categories.<name>"} or {from: "priority_chains.<name>"}
+    reference (used in layers.*.paint entries) to the already-compiled
+    expression it points at."""
+    path = ref["from"]
+    section, name = path.split(".", 1)
+    if section == "categories":
+        return categories[name]
+    if section == "priority_chains":
+        return chains[name]
+    raise ValueError(f"unknown layers.*.paint reference: {path!r}")
+
+
+def build_standalone_layers(config, by_id, categories, chains):
+    """layers: entries with engine: standalone — a single layer outside
+    the tier structure, addressed by id, whose paint properties are
+    replaced with already-compiled categories/priority_chains
+    expressions (docs/decisions/0022). Unlike engine: tier_template
+    (still wired by hand in assemble.build_tier_block(), not read from
+    this section generically — a known inconsistency, not yet worth the
+    risk of refactoring already-verified tier wiring to fix), this
+    engine IS driven directly from the YAML's layers: list."""
+    out = {}
+    for entry in config.get("layers", []):
+        if entry.get("engine") != "standalone":
+            continue
+        lid = entry["id"]
+        layer = json.loads(json.dumps(by_id[lid]))  # deep copy — never mutate the loaded source
+        for prop, ref in entry.get("paint", {}).items():
+            layer["paint"][prop] = resolve_from_ref(ref, categories, chains)
+        out[lid] = layer
+    return out
+
+
 def apply_step_outputs(expr, tokens, palette):
     """Overrides a ["step", input, out0, stop1, out1, stop2, out2, ...]
     expression's literal outputs in place, keeping its own structure
@@ -173,6 +207,7 @@ if __name__ == "__main__":
     categories = build_categories(config)
     chains = build_priority_chains(config)
     patches, _patched_ids = build_patches(config, by_id)
+    standalone = build_standalone_layers(config, by_id, categories, chains)
 
     checks = [
         ("building_fill", categories["building_fill"], by_id["bvmap-建築物0"]["paint"]["fill-color"]),
@@ -180,6 +215,8 @@ if __name__ == "__main__":
          by_id["bvmap-建築物の外周線0"]["paint"]["line-color"]),
         ("building_outline_width", categories["building_outline_width"],
          by_id["bvmap-建築物の外周線0"]["paint"]["line-width"]),
+        ("structure_fill", categories["structure_fill"], by_id["bvmap-構造物面"]["paint"]["fill-color"]),
+        ("structure_line", categories["structure_line"], by_id["bvmap-構造物線"]["paint"]["line-color"]),
         ("anno_text_color", categories["anno_text_color"],
          by_id["bvmap-注記角度付き線"]["paint"]["text-color"]),
         ("anno_text_font", categories["anno_text_font"],
@@ -187,6 +224,13 @@ if __name__ == "__main__":
         ("road_color", chains["road_color"], by_id["bvmap-道路中心線色1"]["paint"]["line-color"]),
         ("patch bvmap-行政区画", patches["bvmap-行政区画"], by_id["bvmap-行政区画"]),
         ("patch bvmap-水域", patches["bvmap-水域"], by_id["bvmap-水域"]),
+        ("patch bvmap-構造物面の外周線", patches["bvmap-構造物面の外周線"], by_id["bvmap-構造物面の外周線"]),
+        ("patch bvmap-等高線", patches["bvmap-等高線"], by_id["bvmap-等高線"]),
+        ("patch bvmap-等深線", patches["bvmap-等深線"], by_id["bvmap-等深線"]),
+        ("patch bvmap-等高線数値部", patches["bvmap-等高線数値部"], by_id["bvmap-等高線数値部"]),
+        ("patch bvmap-等深線数値部", patches["bvmap-等深線数値部"], by_id["bvmap-等深線数値部"]),
+        ("standalone bvmap-構造物面", standalone["bvmap-構造物面"], by_id["bvmap-構造物面"]),
+        ("standalone bvmap-構造物線", standalone["bvmap-構造物線"], by_id["bvmap-構造物線"]),
     ]
 
     mismatches = [name for name, generated, original in checks

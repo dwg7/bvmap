@@ -43,14 +43,23 @@ palette:
   anno_29: "rgba(29,29,29,1)"
   anno_98: "rgba(98,98,98,1)"
   anno_70: "rgba(70,70,70,1)"
-  anno_88: "rgba(88,88,88,1)"
-  anno_161: "rgba(161,161,161,1)"
   anno_68: "rgba(68,68,68,1)"
   anno_80: "rgba(80,80,80,1)"
   anno_42: "rgba(42,42,42,1)"
   anno_59: "rgba(59,59,59,1)"
   anno_50: "rgba(50,50,50,1)"
   black: "rgba(0,0,0,1)"
+  # gray_88/gray_161は、Anno重要度ランプのgroup_b/c7352(vt_code 7372/7352)と、
+  # 独立した等深線数値部/等高線数値部シンボルレイヤーの両方で使われている、
+  # 意図的に揃えられた値([0022](../docs/decisions/0022-zl4-10-and-post-tier-layers-footprint.md)
+  # で発見)——だからanno_*ではなくgray_*に付け直した(Anno専用ではないため)。
+  gray_88: "rgba(88,88,88,1)"
+  gray_161: "rgba(161,161,161,1)"
+  # bvmap-dark.jsonはrgb()とrgba()を同じ意味で混在させている(0022で確認)。
+  # 数値としては上と同じ161/88だが、文字列表現が違うので別トークンにする
+  # (バイト完全一致のゲートを保つため)。
+  gray_161_rgb: "rgb(161,161,161)"
+  gray_88_rgb: "rgb(88,88,88)"
 
 categories:
   building_fill:
@@ -84,6 +93,22 @@ categories:
       c3112: {codes: [3112], value: 1}
     default: 0
 
+  # 構造物3層(0022)。building_fill/outlineと全く同じ「vt_codeフラット
+  # match」の形——建物とは別テーブルだが、同じコンパイラで再現できる。
+  structure_fill:
+    engine: flat_match
+    groups:
+      c4301: {codes: [4301], value: gray_152}
+      c4302: {codes: [4302], value: gray_233}
+    default: transparent
+
+  structure_line:
+    engine: flat_match
+    groups:
+      c4201: {codes: [4201], value: black}
+      c4202: {codes: [4202], value: gray_100}
+    default: transparent
+
   anno_text_color:
     engine: flat_match
     # 名前は仮(GSI公式名ではない、category_table.pyのコメント参照)。
@@ -91,8 +116,8 @@ categories:
       c521: {codes: [521], value: anno_29}
       c348: {codes: [348], value: anno_98}
       group_a: {codes: [411, 412, 413, 421, 422, 423, 431, 432, 441, 860, 2941, 2942, 2943, 2944, 2945], value: anno_70}
-      group_b: {codes: [7372, 7711], value: anno_88}
-      c7352: {codes: [7352], value: anno_161}
+      group_b: {codes: [7372, 7711], value: gray_88}
+      c7352: {codes: [7352], value: gray_161}
       group_c: {codes: [2901, 2903, 2904], value: gray_255}
       # 注意: text-fontのwater_coastal(下記)とはvt_codeの範囲が異なる
       # (8コード vs 11コード、0017で確認済み)。同じ「水域・海岸」という
@@ -160,6 +185,19 @@ layers:
     engine: tier_template
     paint:
       line-color: {from: categories.building_outline_color}
+
+  # tier構造の外にある独立レイヤー(0022)。engine: standaloneは、baseを
+  # bvmap-dark.jsonからそのままコピーし、指定したpaintプロパティだけ
+  # categoriesの生成結果に差し替える(tier_templateのようなtier展開は
+  # 行わない、1レイヤー1回きりの配線)。
+  - id: bvmap-構造物面
+    engine: standalone
+    paint:
+      fill-color: {from: categories.structure_fill}
+  - id: bvmap-構造物線
+    engine: standalone
+    paint:
+      line-color: {from: categories.structure_line}
 
 patches:
   # 「リテラル保持」層。生JSONは埋め込まず、bvmap-dark.jsonの該当レイヤーを
@@ -307,10 +345,52 @@ patches:
 
   - id: bvmap-等高線
     base: {source: style/bvmap-dark.json, layer: bvmap-等高線}
-    literal_reason: "等高線・等深線(0008の順序体系⑦)。"
+    literal_reason: >
+      等高線・等深線(0008の順序体系⑦)。line-colorはbvmap-等高線数値部の
+      text-colorと数値として同じ161——0022で発見、gray_161_rgbで統一。
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_161_rgb
 
   - id: bvmap-等深線
     base: {source: style/bvmap-dark.json, layer: bvmap-等深線}
-    literal_reason: "等高線・等深線(0008の順序体系⑦)。"
+    literal_reason: >
+      等高線・等深線(0008の順序体系⑦)。line-colorはbvmap-等深線数値部の
+      text-colorと数値として同じ88——0022で発見、gray_88_rgbで統一。
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_88_rgb
+
+  - id: bvmap-構造物面の外周線
+    base: {source: style/bvmap-dark.json, layer: bvmap-構造物面の外周線}
+    literal_reason: >
+      構造物(0022)。vt_codeによる分岐を持たず(bvmap-構造物面と違い、
+      対応するvt_codeが無いものも含め全て一律の輪郭)、gray_164は
+      建物の外周線と完全に同じ値だが、共有テーブル化はしていない
+      (構造が違う——建物はvt_code不一致でtransparentになるが、これは
+      常にgray_164)。
+    known_pattern_pending: false
+    color_overrides:
+      line-color: gray_164
+
+  - id: bvmap-等高線数値部
+    base: {source: style/bvmap-dark.json, layer: bvmap-等高線数値部}
+    literal_reason: >
+      等高線の数値ラベル(0008の順序体系⑪相当)。vt_code 7352はAnnoの
+      text-colorランプにも単独カテゴリc7352として現れ、同じgray_161を
+      使う(0022で発見)——同じvt_codeが2つの異なるレイヤー機構で
+      同色に保たれている。
+    known_pattern_pending: false
+    color_overrides:
+      text-color: gray_161
+      text-halo-color: gray_255
+
+  - id: bvmap-等深線数値部
+    base: {source: style/bvmap-dark.json, layer: bvmap-等深線数値部}
+    literal_reason: >
+      等深線の数値ラベル。vt_code 7372はAnnoのtext-colorランプにも
+      group_bとして現れ、同じgray_88を使う(0022で発見)。
+    known_pattern_pending: false
+    color_overrides:
+      text-color: gray_88
+      text-halo-color: gray_255
