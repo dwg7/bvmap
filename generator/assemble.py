@@ -5,47 +5,46 @@ The final Stage 1 gate (docs/decisions/0009, HANDOVER.md item 4): combine
 every mechanism proven so far into one 123-layer array and diff it against
 style/bvmap-dark.json layer-by-layer. This is an *integration* test, not
 just a copy — wherever a compiler has been proven (tier_template,
-category_table, road_color, building_color), this module actively
-substitutes its generated output in place of a literal copy, so a
+category_table via load_input, road_color, building_color), this module
+actively substitutes its generated output in place of a literal copy, so a
 mismatch here means the compiler's output doesn't actually fit into the
 assembled whole, not just that the compiler passed its own narrow test.
 
-Layers this module does NOT yet generate (48 of 123) are carried over
-verbatim from style/bvmap-dark.json. That is the "literal" bucket
-discussed in the case conference (docs/decisions/0009's escape hatch) —
-see LITERAL_RANGES below for exactly which ones and why.
+As of docs/decisions/0020, every color-bearing generated piece (Anno
+text-color/text-font, road color, building fill/outline, and 2 of the 3
+被覆面-dance patches) is driven from generator/starlight-input.yaml via
+generator/load_input.py, not from hardcoded Python constants — this is
+the code/YAML wiring the case conference asked for.
+
+Layers this module does NOT yet generate (46 of 123; 2 fewer than 0019's
+48, now that bvmap-行政区画/bvmap-水域 are YAML-driven patches) are carried
+over verbatim from style/bvmap-dark.json — see LITERAL_RANGES/
+LITERAL_ANNO_LAYERS below for exactly which ones and why.
 """
 import json
 
-from tier_template import (
-    extract_templates, generate_tier_block, KNOWN_TIER4_ANOMALIES, TIERS, ROLES_TIER0, ROLES_SHARED,
-)
-from category_table import (
-    compile_match_expression,
-    ANNO_TEXT_COLOR_CATEGORIES, ANNO_TEXT_COLOR_VALUES, SHARED_TEXT_COLOR_LAYERS,
-    ANNO_TEXT_FONT_CATEGORIES, ANNO_TEXT_FONT_VALUES,
-)
-from road_color import compile_road_color_step
-from building_color import (
-    BUILDING_FILL_CATEGORIES, BUILDING_FILL_VALUES,
-    BUILDING_OUTLINE_CATEGORIES, BUILDING_OUTLINE_COLOR_VALUES, BUILDING_OUTLINE_WIDTH_VALUES,
-)
+from tier_template import extract_templates, generate_tier_block, KNOWN_TIER4_ANOMALIES
+from load_input import load, build_categories, build_priority_chains, build_patches
 
 # 7 of the 9 Anno layers share the text-font water/coastal split — 2 more
 # than share text-color (docs/decisions/0017's unresolved let-wrapped
 # layers, bvmap-注記シンボル付きソート順100以上/100未満, still use the
 # split for text-font even though their text-color isn't reproduced yet).
-SHARED_TEXT_FONT_LAYERS = SHARED_TEXT_COLOR_LAYERS + [
-    "bvmap-注記シンボル付きソート順100以上",
-    "bvmap-注記シンボル付きソート順100未満",
+SHARED_TEXT_FONT_LAYERS = [
+    "bvmap-注記シンボルなし縦ソート順100以上", "bvmap-注記シンボルなし横ソート順100以上",
+    "bvmap-注記角度付き線",
+    "bvmap-注記シンボルなし縦ソート順100未満", "bvmap-注記シンボルなし横ソート順100未満",
+    "bvmap-注記シンボル付きソート順100以上", "bvmap-注記シンボル付きソート順100未満",
 ]
 
 # Layers carried over verbatim, with the reason grouped by range (docs/
 # decisions/0009's escape hatch). None of these have a compiler yet;
-# each is a candidate for its own case-conference slot later.
+# each is a candidate for its own case-conference slot later. (2 of these
+# 23 — bvmap-行政区画/bvmap-水域 — get overwritten by YAML patches below;
+# they stay listed here as the literal fallback if a patch is ever removed.)
 LITERAL_RANGES = {
     "background/AdmArea/WA/terrain/hydrography/boundaries/contours (layers 0-22)":
-        [l for l in range(0, 23)],
+        list(range(0, 23)),
     "ZL4-10 low-zoom overview (layers 23-25, excluded from the tier block by design)":
         [23, 24, 25],
     "post-tier individual layers (dashed roads, tunnels, structures, power lines, etc., 96-113)":
@@ -63,17 +62,10 @@ LITERAL_ANNO_LAYERS = [
 ]
 
 
-def build_tier_block(by_id):
+def build_tier_block(by_id, categories, chains):
     templates_tier0 = extract_templates(by_id, 0)
     templates_tier1 = extract_templates(by_id, 1)
     generated = generate_tier_block(templates_tier0, templates_tier1)
-
-    road_color_generated = compile_road_color_step()
-    building_fill_generated = compile_match_expression(BUILDING_FILL_CATEGORIES, BUILDING_FILL_VALUES)
-    building_outline_color_generated = compile_match_expression(
-        BUILDING_OUTLINE_CATEGORIES, BUILDING_OUTLINE_COLOR_VALUES)
-    building_outline_width_generated = compile_match_expression(
-        BUILDING_OUTLINE_CATEGORIES, BUILDING_OUTLINE_WIDTH_VALUES)
 
     out = []
     for template_layer in generated:
@@ -92,23 +84,23 @@ def build_tier_block(by_id):
 
         if lid.startswith("bvmap-道路中心線色") and lid != "bvmap-道路中心線色0":
             # tier 0's plain (non-bridge) 色0 keeps its own extra zoom>=14
-            # branch (docs/decisions/0016/0018) — road_color.py only
+            # branch (docs/decisions/0016/0018) — road_color only
             # reproduces the 9 non-exceptional layers, so leave 色0 as
             # tier_template's own literal-per-tier extraction.
-            layer["paint"]["line-color"] = road_color_generated
+            layer["paint"]["line-color"] = chains["road_color"]
         elif lid.startswith("bvmap-建築物の外周線"):
-            layer["paint"]["line-color"] = building_outline_color_generated
-            layer["paint"]["line-width"] = building_outline_width_generated
+            layer["paint"]["line-color"] = categories["building_outline_color"]
+            layer["paint"]["line-width"] = categories["building_outline_width"]
         elif lid.startswith("bvmap-建築物"):
-            layer["paint"]["fill-color"] = building_fill_generated
+            layer["paint"]["fill-color"] = categories["building_fill"]
 
         out.append(layer)
     return out
 
 
-def build_anno_block(anno_ids, by_id):
-    text_color_generated = compile_match_expression(ANNO_TEXT_COLOR_CATEGORIES, ANNO_TEXT_COLOR_VALUES)
-    text_font_generated = compile_match_expression(ANNO_TEXT_FONT_CATEGORIES, ANNO_TEXT_FONT_VALUES)
+def build_anno_block(anno_ids, by_id, categories):
+    text_color_generated = categories["anno_text_color"]
+    text_font_generated = categories["anno_text_font"]
 
     out = []
     for lid in anno_ids:
@@ -127,17 +119,29 @@ if __name__ == "__main__":
     layers = style["layers"]
     by_id = {l["id"]: l for l in layers}
 
+    config = load()
+    categories = build_categories(config)
+    chains = build_priority_chains(config)
+    patches = build_patches(config, by_id)
+
     assembled_by_id = {}
 
     for _, indices in LITERAL_RANGES.items():
         for i in indices:
             assembled_by_id[layers[i]["id"]] = layers[i]
 
-    for layer in build_tier_block(by_id):
+    # YAML-driven patches (docs/decisions/0020) override the literal copy
+    # for the subset of "literal" layers that do have a resolved color
+    # override (bvmap-行政区画/bvmap-水域; background's is left un-applied
+    # by build_patches() itself — see starlight-input.yaml's note).
+    for lid, layer in patches.items():
+        assembled_by_id[lid] = layer
+
+    for layer in build_tier_block(by_id, categories, chains):
         assembled_by_id[layer["id"]] = layer
 
     anno_ids = [l["id"] for l in layers if l["id"].startswith("bvmap-注記")]
-    for layer in build_anno_block(anno_ids, by_id):
+    for layer in build_anno_block(anno_ids, by_id, categories):
         assembled_by_id[layer["id"]] = layer
 
     assert len(assembled_by_id) == len(layers), (len(assembled_by_id), len(layers))
@@ -154,13 +158,15 @@ if __name__ == "__main__":
         if gs != os_:
             mismatches.append((g["id"], gs[:200], os_[:200]))
 
-    literal_count = sum(len(v) for v in LITERAL_RANGES.values()) + len(LITERAL_ANNO_LAYERS)
+    literal_count = (
+        sum(len(v) for v in LITERAL_RANGES.values()) + len(LITERAL_ANNO_LAYERS) - len(patches)
+    )
     if not mismatches:
         print(
-            f"STAGE 1 FINAL GATE: PASS — all {len(assembled)} layers reproduced exactly. "
+            f"STAGE 1 FINAL GATE: PASS — all {len(assembled)} layers reproduced exactly, "
+            f"driven from generator/starlight-input.yaml. "
             f"{literal_count} literal (not yet decomposed), "
-            f"{len(assembled) - literal_count} generated (tier structure / category tables / "
-            f"road priority chain / building tables)."
+            f"{len(assembled) - literal_count} generated/YAML-patched."
         )
     else:
         print(f"STAGE 1 FINAL GATE: FAIL — {len(mismatches)} mismatches of {len(assembled)} layers")

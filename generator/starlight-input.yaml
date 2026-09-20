@@ -1,13 +1,13 @@
-# generator/sample-starlight-input.yaml
+# generator/starlight-input.yaml
 #
-# 試作(prototype)、2026-09-20。ジェネレーターの入力候補となるYAMLの
-# サンプル——全123レイヤーの網羅ではなく、これまでに確認した3つの仕組み
-# (docs/decisions/0018の2種のコンパイラ + tier_template.pyの構造テンプレート)
-# と、本ファイルで新たに提案する第4の仕組み「patches」が、1つの入力ファイル
-# の中でどう共存するかを見るための一部抜粋。ディスカッション用、まだどの
-# Pythonコードからも読まれていない。
+# ジェネレーターの入力。generator/load_input.py が読み込み、
+# generator/assemble.py が呼び出す。2026-09-20時点でカバーしているのは
+# 建物・道路色・注記(Anno)のtext-color/text-font、および被覆面3層のうち
+# 色だけをpalette化したpatch(background以外)——全123レイヤーの網羅では
+# なく、ADR([0018](../docs/decisions/0018-road-color-not-flat-category-compiler.md)、
+# [0020](../docs/decisions/0020-yaml-wiring-stage1.md))で確認済みの範囲。
 #
-# 設計方針(このコメント自体もAI向けの構造化コメントの試作):
+# 設計方針(このコメント自体もAI向けの構造化コメント):
 #   - palette: 生のrgba値は1箇所にしか書かない。他は全てここへの参照にする。
 #     Starlightの配色磨き上げは、理想的には主にこのセクションを触るだけで
 #     済むようにしたい——これが「リテラル保持でYAMLを貧相にしない」ための核。
@@ -17,10 +17,7 @@
 #     (generator/*.py)が持つ。構造までYAMLに落とすと、単なるJSONの
 #     入れ子表現になり、可読性もAI可読性も上がらないため。
 #   - layers: tier_template.pyが展開する14ロールのうち、色を持つものだけ
-#     抜粋。塗り/色をcategories・priority_chainsに配線する——現状の
-#     tier_template.pyは各roleのpaintをtier0からの不透明コピーとして
-#     扱っているが(Stage 1のゲートはそれで通っている)、Starlightの配色
-#     磨き上げにはpalette経由の配線が要る。
+#     抜粋。塗り/色をcategories・priority_chainsに配線する。
 #   - patches: 「リテラル保持」層。生JSONを埋め込まず、bvmap-dark.jsonの
 #     該当レイヤーをbaseとして、①なぜliteralか ②既知パターンが未解明の
 #     まま残っているか ③色だけpalette参照に差し替える、の3点だけを書く。
@@ -32,7 +29,7 @@ palette:
   gray_157: "rgba(157,157,157,1)"  # vt_motorway==1 / 高速自動車国道等(0018)
   gray_160: "rgba(160,160,160,1)"  # 国道(0018)
   gray_226: "rgba(226,226,226,1)"  # 都道府県道(0018)
-  gray_173: "rgba(173,173,173,1)"  # 幅員ランプ: vt_code in [2721,2722,2723](0018)
+  gray_173: "rgba(173,173,173,1)"  # 幅員ランプ: vt_code in [2721,2722,2723]、および3m-5.5m未満例外(0018)
   gray_200: "rgba(200,200,200,1)"  # 幅員ランプ: vt_code in [2731,2732,2733](0018)
   gray_255: "rgba(255,255,255,1)"  # 幅員ランプdefault、および行政区画の白(被覆面の抜き)
   gray_233: "rgba(233,233,233,1)"  # 普通建物 塗り(0010 §2)
@@ -41,6 +38,19 @@ palette:
   gray_164: "rgba(164,164,164,1)"  # 建物 輪郭、種別によらず一律(0010 §2)
   gray_209: "rgba(209,209,209,1)"  # 水域(WA)塗り。背景(zoom4-8)と偶然同値(0010 §4)
   transparent: "rgba(0,0,0,0)"
+  # 注記(Anno)の重要度ランプ(0008、8+1段階)。他のカテゴリと値が重複しない
+  # 専用の濃淡なので、gray_*と別名にして混同を避ける。
+  anno_29: "rgba(29,29,29,1)"
+  anno_98: "rgba(98,98,98,1)"
+  anno_70: "rgba(70,70,70,1)"
+  anno_88: "rgba(88,88,88,1)"
+  anno_161: "rgba(161,161,161,1)"
+  anno_68: "rgba(68,68,68,1)"
+  anno_80: "rgba(80,80,80,1)"
+  anno_42: "rgba(42,42,42,1)"
+  anno_59: "rgba(59,59,59,1)"
+  anno_50: "rgba(50,50,50,1)"
+  black: "rgba(0,0,0,1)"
 
 categories:
   building_fill:
@@ -65,6 +75,56 @@ categories:
       c3112: {codes: [3112], value: gray_164}
     default: transparent
 
+  building_outline_width:
+    engine: flat_match
+    property: vt_code
+    value_type: number  # not a color — matched or not, 1px or 0 (0010 §2)
+    groups:
+      c3101: {codes: [3101], value: 1}
+      c3102: {codes: [3102], value: 1}
+      c3103: {codes: [3103], value: 1}
+      c3111: {codes: [3111], value: 1}
+      c3112: {codes: [3112], value: 1}
+    default: 0
+
+  anno_text_color:
+    engine: flat_match
+    property: vt_code
+    # 名前は仮(GSI公式名ではない、category_table.pyのコメント参照)。
+    groups:
+      c521: {codes: [521], value: anno_29}
+      c348: {codes: [348], value: anno_98}
+      group_a: {codes: [411, 412, 413, 421, 422, 423, 431, 432, 441, 860, 2941, 2942, 2943, 2944, 2945], value: anno_70}
+      group_b: {codes: [7372, 7711], value: anno_88}
+      c7352: {codes: [7352], value: anno_161}
+      group_c: {codes: [2901, 2903, 2904], value: gray_255}
+      # 注意: text-fontのwater_coastal(下記)とはvt_codeの範囲が異なる
+      # (8コード vs 11コード、0017で確認済み)。同じ「水域・海岸」という
+      # 概念でも、プロパティごとに実際のメンバーシップが違う。
+      water_coastal: {codes: [321, 322, 341, 344, 345, 820, 840, 841], value: anno_68}
+      c220: {codes: [220], value: anno_80}
+      c312: {codes: [312], value: anno_42}
+      group_d: {codes: [333, 346], value: anno_59}
+      group_e:
+        codes: [511, 522, 523, 531, 532, 534, 611, 612, 613, 614, 615, 621, 623, 631, 632, 633,
+                634, 641, 642, 651, 652, 653, 654, 661, 662, 671, 672, 673, 681, 720, 730, 870,
+                880, 881, 882, 883, 884, 885, 886, 887, 888, 889, 890, 899, 999, 3201, 3202,
+                3203, 3204, 3205, 3206, 3211, 3212, 3213, 3214, 3215, 3216, 3217, 3218, 3221,
+                3231, 3232, 3241, 3242, 3243, 3244]
+        value: anno_50
+    default: black
+
+  anno_text_font:
+    engine: flat_match
+    property: vt_code
+    value_type: font_literal  # 値はcompile_match_expression()に["literal",[name]]として渡す
+    groups:
+      # text-colorのwater_coastal(上記)より3コード多い(342/347/842、海岸・
+      # 浜・半島系)——フォントでは明朝体扱いだが、色ではdefault(黒)に落ちる
+      # (0017で確認済み)。
+      water_coastal: {codes: [321, 322, 341, 342, 344, 345, 347, 820, 840, 841, 842], value: "NotoSerifJP-SemiBold"}
+    default: "NotoSansJP-Regular"
+
 priority_chains:
   road_color:
     engine: priority_case_chain  # 0018: 複数プロパティにまたがる優先順位付きcase連鎖
@@ -83,11 +143,12 @@ priority_chains:
       国道: gray_160
       都道府県道: gray_226
       高速自動車国道等: gray_157
-    motorway_override: gray_157
+    motorway_color: gray_157
     width_ramp:  # 一般道のdefaultが落ちる先(vt_rnkwidth/vt_code駆動、0018)
       "2721,2722,2723": gray_173
       "2731,2732,2733": gray_200
     width_ramp_default: gray_255
+    narrow_exception_color: gray_173  # zoom<14限定、vt_rnkwidth=="3m-5.5m未満"(0018)
 
 layers:
   # tier_template.pyの14ロールのうち、色を持つものだけ抜粋。tierとfilterの
@@ -109,7 +170,8 @@ patches:
   # 「リテラル保持」層。生JSONは埋め込まず、bvmap-dark.jsonの該当レイヤーを
   # baseにして、①なぜliteralか ②既知パターン未解明フラグ ③色のpalette化、
   # の3点だけをここに書く。値はbvmap-dark.jsonから実際に読み取って検証済み
-  # (2026-09-20)。
+  # (2026-09-20)。color_overridesはトップレベルのpaintプロパティへの代入
+  # のみ対応(generator/load_input.py参照)。
   - id: bvmap-行政区画
     base: {source: style/bvmap-dark.json, layer: bvmap-行政区画}
     literal_reason: >
@@ -141,11 +203,8 @@ patches:
     literal_reason: "背景単色のstep。行政区画/水域との3層ダンスの一部。"
     known_pattern_pending: true
     known_pattern_note: "bvmap-行政区画と同じ「被覆面ダンス」の一部。"
-    color_overrides:
-      # 未解決: background-colorはstep式で3つの値(白/gray_209/白)を持ち、
-      # 「fill-colorをこの1トークンに差し替える」という単純な代入では
-      # 済まない。stepの特定の停止点(この場合zoom 4-8区間の値)だけを
-      # 差し替える書き方がまだ決まっていない——上のfill-color系のような
-      # 「トップレベル1プロパティ=1値」の場合と違い、式の中に埋まった値を
-      # 指す記法が必要になる。次の検討ポイント。
-      mid_zoom_gray: gray_209  # 仮運用: 値だけ書き、パスの記法は未確定
+    # 未解決: background-colorはstep式で3つの値(白/gray_209/白)を持ち、
+    # 「fill-colorをこの1トークンに差し替える」という単純な代入では済まない
+    # (色が式の中に埋まっている)。color_overridesは意図的に書かず、この
+    # patchは現状「注釈のみ」でloaderには適用させない(load_input.py参照)。
+    color_overrides: {}

@@ -22,10 +22,11 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STAR
 
 1. **`bvmap-注記シンボル付きソート順100以上/100未満`の`let`包装パターンの解明**。同じ基本テーブルを`let`で包み、2レイヤー間にわずかな差分がある(text-sizeのズーム14例外と同種と推測、未検証)。[0017](docs/decisions/0017-category-table-generator-stage1.md)の「未検証」節参照
 2. ~~道路の`vt_rdctg`駆動色と建物の塗り/輪郭を、カテゴリ表コンパイラで再現できるか検証~~ **完了(2026-09-20)**: 建物は`compile_match_expression()`で無改造再現([0010](docs/decisions/0010-color-semantic-categories.md)の元の仮説通り)。道路色は同じコンパイラでは再現できず、専用の優先順位付きcase連鎖(`generator/road_color.py`)が必要と判明——さらに[0010](docs/decisions/0010-color-semantic-categories.md)の道路色の表自体に誤りがあり、[0018](docs/decisions/0018-road-color-not-flat-category-compiler.md)で訂正済み
-3. ~~残りの個別レイヤーの共有テーブル化せずリテラル保持で組み込む設計~~ **完了(2026-09-20)**: `generator/assemble.py`が48レイヤーをリテラル保持で組み込み、[0019](docs/decisions/0019-stage1-final-assembly.md)に範囲と理由を記録。YAML入力側の設計(`base`参照+色だけpalette化)は[sample-starlight-input.yaml](generator/sample-starlight-input.yaml)で試作済み、まだ未実装
+3. ~~残りの個別レイヤーの共有テーブル化せずリテラル保持で組み込む設計~~ **完了(2026-09-20)**: `generator/assemble.py`がリテラル保持で組み込み、[0019](docs/decisions/0019-stage1-final-assembly.md)に範囲と理由を記録
 4. ~~全123レイヤーを組み立てて`bvmap-dark.json`と完全一致するか検証~~ **完了(2026-09-20、[0019](docs/decisions/0019-stage1-final-assembly.md))**: `generator/assemble.py`でPASS。Stage 1(reproduction-first generator)完了
-5. **次はここ**: 実際に`bvmap-starlight`の配色をStarlightの方向性(低彩度・明るめ・銀灰色寄り)へ磨き上げる(まだ着手していない、これが本来の目的)。進め方の候補: (a) `sample-starlight-input.yaml`のpaletteセクションを実装に落とし、そこを差し替えるだけで配色が変わる状態を作る、(b) 48レイヤーのリテラル群のうち色を持つものから`color_overrides`を実装していく
-6. `hfu/stars`へのPR作成([0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md))
+5. ~~YAML入力(`sample-starlight-input.yaml`)からの配線~~ **完了(2026-09-20、[0020](docs/decisions/0020-yaml-wiring-stage1.md))**: `generator/starlight-input.yaml` + `generator/load_input.py`。色を持つ生成部分(建物・道路色・注記text-color/text-font・行政区画/水域のpatch)は全てYAMLのpaletteから解決される。`road_color.py`をパラメータ化するリファクタリングが必要だった。残り46レイヤーはまだリテラル、`background`のstep式patchは未実装のまま
+6. **次はここ**: 実際に`bvmap-starlight`の配色をStarlightの方向性(低彩度・明るめ・銀灰色寄り)へ磨き上げる(まだ着手していない、これが本来の目的)——今は`generator/starlight-input.yaml`のpaletteセクションを差し替えるだけで配色が変わる状態になっている
+7. `hfu/stars`へのPR作成([0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md))
 
 ## 未解決のまま保留中の判断
 
