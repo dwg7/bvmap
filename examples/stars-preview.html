@@ -70,11 +70,23 @@ import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibr
   map.addControl(new NavigationControl());
   window.__map = map; // debugging aid
 
+  let currentStyleURL = "https://stars.optgeo.org/style/bvmap-starlight";
+  let switching = false;
+
   const panel = document.getElementById("control-panel");
   panel.addEventListener("click", (e) => {
     const styleBtn = e.target.closest("button[data-style]");
     if (styleBtn) {
-      map.setStyle(styleBtn.dataset.style);
+      const url = styleBtn.dataset.style;
+      // Same fix as examples/style-preview.html: bvmap-dark and
+      // bvmap-starlight share identical layer ids/order, so setStyle()'s
+      // default diff:true path is unreliable here — force a full
+      // replacement and ignore overlapping clicks.
+      if (switching || url === currentStyleURL) return;
+      switching = true;
+      map.once("idle", () => { switching = false; });
+      map.setStyle(url, { diff: false });
+      currentStyleURL = url;
       for (const b of panel.querySelectorAll("button[data-style]")) {
         b.setAttribute("aria-pressed", String(b === styleBtn));
       }
