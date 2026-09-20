@@ -61,11 +61,28 @@ import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibr
   map.addControl(new NavigationControl());
   window.__map = map; // debugging aid
 
+  let currentStyleURL = "../style/bvmap-dark.json";
+  let switching = false;
+
   const panel = document.getElementById("style-panel");
   panel.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-style]");
     if (!btn) return;
-    map.setStyle(btn.dataset.style);
+    const url = btn.dataset.style;
+    // Guard against MapLibre's default diff:true setStyle path, and against
+    // overlapping calls: bvmap-dark.json/bvmap-starlight.json share the same
+    // 123 layer ids/order by design (the generator's structural gate), so
+    // MapLibre's diff tries a fine-grained update (including the sprite/
+    // glyphs URLs) instead of a full teardown — that path has been
+    // unreliable here (switching silently stops taking effect after a few
+    // clicks). diff:false forces a full style replacement every time, and
+    // ignoring clicks while one is still in flight avoids queuing a second
+    // setStyle before the first has settled.
+    if (switching || url === currentStyleURL) return;
+    switching = true;
+    map.once("idle", () => { switching = false; });
+    map.setStyle(url, { diff: false });
+    currentStyleURL = url;
     for (const b of panel.querySelectorAll("button")) {
       b.setAttribute("aria-pressed", String(b === btn));
     }
