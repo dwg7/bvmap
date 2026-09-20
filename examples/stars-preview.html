@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bvmap-starlight (stars.optgeo.org) preview</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, sans-serif; }
+  #map { position: absolute; inset: 0; }
+  .panel {
+    position: absolute;
+    z-index: 10;
+    top: 12px;
+    left: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .panel button {
+    display: block;
+    width: 100%;
+    margin: 2px 0;
+    padding: 4px 10px;
+    text-align: left;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+  }
+  .panel button[aria-pressed="true"] {
+    background: #2b6cb0;
+    color: #fff;
+    border-color: #2b6cb0;
+  }
+  .panel .section-label {
+    font-size: 11px;
+    color: #666;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div class="panel" id="control-panel">
+  <button data-style="https://stars.optgeo.org/style/bvmap-dark" aria-pressed="false">bvmap-dark</button>
+  <button data-style="https://stars.optgeo.org/style/bvmap-starlight" aria-pressed="true">bvmap-starlight</button>
+  <div class="section-label">見どころ(アイコン・注記が見える地点)</div>
+  <button data-goto="141.36108,43.061529,16">札幌駅バスセンター前</button>
+  <button data-goto="135.686737,34.905273,16">大山崎(寺院卍・老人ホーム記号)</button>
+  <button data-goto="135.7727,34.9671,17">伏見稲荷(神社記号)</button>
+</div>
+<script type="module">
+// stars.optgeo.org本番配信を直接見るための確認用ページ(examples/style-preview.html
+// のローカル版と対になる)。TileJSON自体のbounds/centerは正常(122-154.77E,
+// 17.03-46.0N)だが、汎用プレビューの初期表示だけでは良い地点にたどり着き
+// にくいため、実際にアイコン・注記が描画される地点をボタンで用意した。
+import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.mjs";
+
+  const map = new MapLibreMap({
+    container: "map",
+    style: "https://stars.optgeo.org/style/bvmap-starlight",
+    center: [141.36108, 43.061529], // 札幌
+    zoom: 16,
+    hash: true,
+  });
+  map.addControl(new NavigationControl());
+  window.__map = map; // debugging aid
+
+  const panel = document.getElementById("control-panel");
+  panel.addEventListener("click", (e) => {
+    const styleBtn = e.target.closest("button[data-style]");
+    if (styleBtn) {
+      map.setStyle(styleBtn.dataset.style);
+      for (const b of panel.querySelectorAll("button[data-style]")) {
+        b.setAttribute("aria-pressed", String(b === styleBtn));
+      }
+      return;
+    }
+    const gotoBtn = e.target.closest("button[data-goto]");
+    if (gotoBtn) {
+      const [lng, lat, zoom] = gotoBtn.dataset.goto.split(",").map(Number);
+      map.flyTo({ center: [lng, lat], zoom });
+    }
+  });
+</script>
+</body>
+</html>
