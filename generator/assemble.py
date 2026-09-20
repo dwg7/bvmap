@@ -201,6 +201,15 @@ if __name__ == "__main__":
             if key in hosting:
                 output_style[key] = hosting[key]
 
+        if "source_attribution" in hosting:
+            # output_style is a shallow copy of the loaded bvmap-dark.json —
+            # output_style["sources"] is still the SAME dict. Deep-copy before
+            # mutating, or this corrupts the in-memory "ground truth" we diff
+            # generated layers against (docs/decisions/0019 hit the same trap
+            # with tier_template's shared paint dicts).
+            output_style["sources"] = json.loads(json.dumps(output_style["sources"]))
+            output_style["sources"]["bvmap"]["attribution"] = hosting["source_attribution"]
+
         # A style's glyphs endpoint is style-wide — if we're switching it,
         # every layer's layout.text-font literal has to resolve against the
         # new host, not just the ones categories.anno_text_font generates.

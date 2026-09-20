@@ -662,6 +662,11 @@ hosting:
   # としてそのまま残っている。glyphsを切り替えるなら全層で一貫させる必要が
   # あるため、assemble.pyの最後でスタイル全体のtext-fontに適用する
   # (generator/load_input.py の remap_font_names())。
+  # 国土地理院コンテンツ利用規約2.0(CC BY 4.0相当)は改変時に「改変した旨」の
+  # 表示を求める。タイルは無改変のためそのまま、スプライトはグレースケール化
+  # した旨を明記する([0036](../docs/decisions/0036-sprite-grayscale-raster-exception.md)、
+  # stars側のマニフェスト記載と同趣旨)。
+  source_attribution: "国土地理院最適化ベクトルタイル。スプライトアイコンは国土地理院最適化ベクトルタイルの原本を改変(グレースケール化)して使用。改変者: dwg7/bvmap。国土地理院コンテンツ利用規約に基づく。"
   font_names:
     "NotoSansJP-Regular": "Noto Sans JP Regular"
     "NotoSerifJP-SemiBold": "Noto Serif JP SemiBold"
