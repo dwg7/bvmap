@@ -67,6 +67,11 @@ palette:
   # 海岸線・河川中心線・地形表記線)で共有し、Anno側のgray_88とは連動させない。
   gray_88_hydro: "rgba(92,93,95,1)"
   gray_150: "rgba(158,159,162,1)"  # 特定地区界(0032のGroup C)。他トークンと非衝突
+  # 0032訂正後の推奨順序4(Group C残り6層)。他トークンと偶然の値一致なし
+  # (0033の「偶然一致チェック」)、確認済み。
+  gray_99: "rgba(102,104,106,1)"  # 水部表記線line
+  gray_35: "rgba(40,42,44,1)"  # 行政区画界線(所属界/市区町村界/都府県界/地方界)4層で共有
+  gray_27: "rgba(33,34,36,1)"  # 行政区画界線国の所属界のみ。gray_35と違う理由は未解明のまま([0021](../docs/decisions/0021-patches-by-id-coverage-expansion.md))
 
 categories:
   building_fill:
@@ -500,32 +505,44 @@ patches:
     base: {source: style/bvmap-dark.json, layer: bvmap-水部表記線line}
     literal_reason: "陸水面・被覆面付随の線群(0008の順序体系⑤)。"
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_99
 
   - id: "bvmap-行政区画界線25000所属界（所属を明示する境界線）"
     base: {source: style/bvmap-dark.json, layer: "bvmap-行政区画界線25000所属界（所属を明示する境界線）"}
     literal_reason: "行政区画線(0008の順序体系⑥)。道路群の直前に位置する独立層。"
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_35
 
   - id: bvmap-行政区画界線25000市区町村界
     base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線25000市区町村界}
     literal_reason: "行政区画線(0008の順序体系⑥)。"
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_35
 
   - id: bvmap-行政区画界線25000都府県界及び北海道総合振興局・振興局界
     base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線25000都府県界及び北海道総合振興局・振興局界}
     literal_reason: "行政区画線(0008の順序体系⑥)。"
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_35
 
   - id: bvmap-行政区画界線地方界
     base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線地方界}
     literal_reason: "行政区画線(0008の順序体系⑥)。"
     known_pattern_pending: false
+    color_overrides:
+      line-color: gray_35
 
   - id: bvmap-行政区画界線国の所属界
     base: {source: style/bvmap-dark.json, layer: bvmap-行政区画界線国の所属界}
     literal_reason: "行政区画線(0008の順序体系⑥)。他の行政区画界線と違いgray_35ではなくgray_27——未検証の差異。"
     known_pattern_pending: true
     known_pattern_note: "同じ行政区画線グループの中で1レイヤーだけ色が違う理由は未調査。"
+    color_overrides:
+      line-color: gray_27
 
   - id: bvmap-等高線
     base: {source: style/bvmap-dark.json, layer: bvmap-等高線}
