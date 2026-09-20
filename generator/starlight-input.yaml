@@ -654,9 +654,13 @@ patches:
 hosting:
   # stars.optgeo.orgの自前フォント配信([0036](../docs/decisions/0036-sprite-grayscale-raster-exception.md)、
   # {fontstack}/{range}は.pbf拡張子なし、URLパターンは実データで確認済み)。
-  # spriteはまだ未定(グレースケール版の本番ホスティング方法をhfu/stars側で
-  # 検討中)のため、キー自体を省略しGSI原本のURLを素通しする。
   glyphs: "https://stars.optgeo.org/font/{fontstack}/{range}"
+  # グレースケール化スプライトのstars自前配信([0036])。Martin再起動後に配信
+  # 開始を実データで確認済み(119アイコン、@2x含む)。個々のアイコンをcrop
+  # して突き合わせたところ、透明度は完全一致・RGBはエッジ付近で最大±10〜30
+  # 程度のずれがある(resvgでのSVG再構築時のリサンプリングらしき挙動、stars
+  # 側に報告済み)。視覚的な影響は軽微と判断し採用する。
+  sprite: "https://stars.optgeo.org/sprite/bvmap-starlight"
   # categories.anno_text_fontが生成しない層(等高線数値部・等深線数値部・
   # 注記道路番号)にも、bvmap-dark.json由来の生フォント名がlayout.text-font
   # としてそのまま残っている。glyphsを切り替えるなら全層で一貫させる必要が
