@@ -62,6 +62,10 @@ palette:
   gray_88_rgb: "rgb(88,88,88)"
   # ZL4-10鉄道(0024)のdefault色。gray_100と同じ数値だがrgb()形式。
   gray_100_rgb: "rgb(100,100,100)"
+  # 鉄道トンネル・軌道(0025)。
+  gray_113: "rgba(113,113,113,1)"  # 鉄道トンネル本体、地下鉄
+  gray_173_rgb: "rgb(173,173,173)"  # 鉄道トンネル本体、駅部分(gray_173と同値、rgb形式)
+  gray_30: "rgba(30,30,30,1)"  # 軌道(RailTrCL)、普通鉄道/特殊鉄道/路面の鉄道
 
 categories:
   building_fill:
@@ -121,6 +125,29 @@ categories:
     groups:
       subway: {codes: ["地下鉄"], value: gray_161}
     default: gray_100_rgb
+
+  # 鉄道トンネル・ククリ(casing)。本体と違い、defaultは単純な値なので
+  # flat_matchでそのまま表現できる(0025)。
+  rail_tunnel_kukuri_color:
+    engine: flat_match
+    property: vt_rtcode
+    groups:
+      subway: {codes: ["地下鉄"], value: gray_255}
+    default: gray_100_rgb
+
+  # 軌道(RailTrCL、0025)。表層/トンネルで暗くなる種別(普通鉄道/特殊鉄道/
+  # 路面の鉄道)は完全に一致する——vt_codeの実際の値集合が違うだけ。
+  railtr_surface_color:
+    engine: flat_match
+    groups:
+      dark: {codes: [2801, 2803, 2806, 2811, 2813, 2816, 2831, 2833, 2836], value: gray_30}
+    default: gray_100
+
+  railtr_tunnel_color:
+    engine: flat_match
+    groups:
+      dark: {codes: [2802, 2804, 2812, 2814, 2832, 2834], value: gray_30}
+    default: gray_100
 
   anno_text_color:
     engine: flat_match
@@ -235,6 +262,16 @@ priority_chains:
       "2721,2722,2723": gray_173
       "2731,2732,2733": gray_255
 
+  # 鉄道トンネル本体(0025)。defaultの枝がcase(vt_sngldbl)を含む入れ子——
+  # flat_matchでは表現できないため、priority_chainsに置く(名前が示す通り
+  # 「優先順位付き」ではないが、構造がコード側にあるという点は同じ)。
+  # 構造はgenerator/rail_tunnel_color.compile_main_color()が持つ。
+  rail_tunnel_main_color:
+    engine: nested_match
+    subway_color: gray_113
+    station_color: gray_173_rgb
+    default_color: gray_100_rgb
+
 layers:
   # tier_template.pyの14ロールのうち、色を持つものだけ抜粋。tierとfilterの
   # 機械的展開はコード側(generator/tier_template.py)の仕事。
@@ -280,6 +317,24 @@ layers:
     engine: standalone
     paint:
       line-color: {from: categories.zl410_rail_color}
+
+  # 鉄道トンネル・軌道(0025)。
+  - id: bvmap-鉄道中心線地下トンネルククリ
+    engine: standalone
+    paint:
+      line-color: {from: categories.rail_tunnel_kukuri_color}
+  - id: bvmap-鉄道中心線地下トンネル
+    engine: standalone
+    paint:
+      line-color: {from: priority_chains.rail_tunnel_main_color}
+  - id: bvmap-軌道の中心線
+    engine: standalone
+    paint:
+      line-color: {from: categories.railtr_surface_color}
+  - id: bvmap-軌道の中心線トンネル
+    engine: standalone
+    paint:
+      line-color: {from: categories.railtr_tunnel_color}
 
 patches:
   # 「リテラル保持」層。生JSONは埋め込まず、bvmap-dark.jsonの該当レイヤーを

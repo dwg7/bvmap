@@ -30,7 +30,8 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→`docs/STAR
    - **完了(2026-09-20、[0022](docs/decisions/0022-zl4-10-and-post-tier-layers-footprint.md)/[0023](docs/decisions/0023-structure-and-contour-layers-implemented.md))**: ZL4-10・tierブロック後の個別18層を踏み跡調査([0022](docs/decisions/0022-zl4-10-and-post-tier-layers-footprint.md))。うち構造物3層・等高線/等深線+数値部4層を実装([0023](docs/decisions/0023-structure-and-contour-layers-implemented.md))——構造物は新設した`layers: engine: standalone`でYAML駆動、等高線/等深線は数値部とpaletteトークンを共有するよう統一。副産物: `layers:`セクションのtier_templateエントリが実はコードから未使用(ドキュメントのみ)だったと判明
    - **完了(2026-09-20、[0024](docs/decisions/0024-zl410-dedicated-module.md))**: ZL4-10専用モジュール`generator/zl410_road_color.py`。国道/高速の2レイヤーは同じテーブルを共有していないと判明(motorwayチェックの有無という構造レベルの違い)——2つの独立した関数で実装。`category_table.compile_match_expression()`に`property`引数を実配線(鉄道のvt_rtcode分岐のため)
    - **完了(2026-09-20、[0025](docs/decisions/0025-remaining-post-tier-13-layers-footprint.md))**: 残り13層を踏み跡調査。GSI公式地物コード表(PDF)を実際に取得して、軌道2層の「非対称性」(以前は保留)を完全に解決——vt_codeは「種別2桁+状態1桁」の構造で、暗い色になる種別(01/11/31)は表層・トンネルで完全に一致していた(非対称に見えたのはパーティションの軸を誤認していたため)。副産物: 鉄道の幅係数テーブル・道路の幅員ランプが、tierと数値まで完全一致する形で別レイヤーに埋め込まれている(共有テーブルイディオムの3・4例目)ことも発見。実装はまだ(鉄道トンネル系・軌道系は専用モジュールが要りそう、残り10層は一回性でリテラルのままで良い)
-   - **残り**: 鉄道トンネル系(2層)・軌道系(2層)の実装(要専用モジュール、未着手)、注記の一部4層
+   - **完了(2026-09-20、[0026](docs/decisions/0026-rail-tunnel-and-railtr-implemented.md))**: 鉄道トンネル系(2層)・軌道系(2層)を実装。`generator/rail_tunnel_color.py`を新設(鉄道トンネル本体のdefault枝がcase入れ子で、flat_matchでは表現できないため)。`priority_chains`に`engine: nested_match`という2つ目の構造タグを追加——ただしコードは`engine`文字列では分岐せず、名前ごとのビルダー登録だけで挙動が決まる設計に単純化した
+   - **残り**: tierブロック後の残り9層(一回性でリテラル保持のままで良いと判断済み)、**注記(Anno)の残り4層**——体系的な調査が効く領域と判断し、他の実装が一区切りついた今から着手する
 7. **次はここ**: 実際に`bvmap-starlight`の配色をStarlightの方向性(低彩度・明るめ・銀灰色寄り)へ磨き上げる(まだ着手していない、これが本来の目的)——今は`generator/starlight-input.yaml`のpaletteセクションを差し替えるだけで配色が変わる状態になっている。⑥で追加した20層の色検証も、この磨き上げ作業の一部として行う
 7. `hfu/stars`へのPR作成([0006](docs/decisions/0006-hfu-stars-is-already-master-repo.md))
 

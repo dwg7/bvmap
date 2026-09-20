@@ -60,10 +60,13 @@ SHARED_TEXT_FONT_LAYERS = SHARED_TEXT_COLOR_LAYERS + [
 # entries too (docs/decisions/0024) — their own independently-authored
 # road/rail color tables, distinct from both each other and from the tier
 # structure's road_color.py.
+# 4 more (indices 98-100, 104: 鉄道中心線地下トンネルククリ/本体,
+# 軌道の中心線トンネル/軌道の中心線) are now `layers: engine: standalone`
+# entries too (docs/decisions/0025).
 LITERAL_RANGES = {
-    "post-tier individual layers (dashed roads, tunnels, power lines, etc., 96-113 "
-    "minus the 5 now covered by standalone/patches — see docs/decisions/0022)":
-        [i for i in range(96, 114) if i not in (106, 107, 108, 112, 113)],
+    "post-tier individual layers (dashed roads, road edges, power lines, etc., 96-113 "
+    "minus the 9 now covered by standalone/patches — see docs/decisions/0022/0025)":
+        [i for i in range(96, 114) if i not in (98, 99, 100, 104, 106, 107, 108, 112, 113)],
 }
 
 # The 2 let-wrapped symbol-attached Anno layers (docs/decisions/0017's

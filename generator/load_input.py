@@ -17,6 +17,7 @@ import yaml
 from category_table import compile_match_expression
 from road_color import compile_road_color_step
 from zl410_road_color import compile_kokudo_color, compile_kousoku_color
+from rail_tunnel_color import compile_main_color as compile_rail_tunnel_main_color
 
 
 def load(path="generator/starlight-input.yaml"):
@@ -115,6 +116,16 @@ def build_zl410_kosoku_expression(entry, palette):
     )
 
 
+def build_rail_tunnel_main_expression(entry, palette):
+    """priority_chains.rail_tunnel_main_color ->
+    rail_tunnel_color.compile_main_color() (docs/decisions/0025)."""
+    return compile_rail_tunnel_main_color(
+        subway_color=resolve(entry["subway_color"], palette),
+        station_color=resolve(entry["station_color"], palette),
+        default_color=resolve(entry["default_color"], palette),
+    )
+
+
 def build_categories(config):
     """Compiles every categories.* entry into its match expression, keyed
     by name (e.g. "building_fill" -> the compiled ["match", ...])."""
@@ -125,10 +136,16 @@ def build_categories(config):
     }
 
 
+# Every priority_chains.* entry has its own dedicated builder — the
+# "engine" field is documentation for the reader (what kind of structure
+# this is: a motorway-priority case chain vs. a plain nested match), not
+# something dispatch depends on; the name->builder mapping already fully
+# determines the behavior.
 PRIORITY_CHAIN_BUILDERS = {
     "road_color": build_road_color_expression,
     "zl410_kokudo_road_color": build_zl410_kokudo_expression,
     "zl410_kosoku_road_color": build_zl410_kosoku_expression,
+    "rail_tunnel_main_color": build_rail_tunnel_main_expression,
 }
 
 
@@ -136,8 +153,6 @@ def build_priority_chains(config):
     palette = config["palette"]
     out = {}
     for name, entry in config.get("priority_chains", {}).items():
-        if entry["engine"] != "priority_case_chain":
-            raise NotImplementedError(f"unknown priority_chains engine for {name!r}: {entry['engine']!r}")
         if name not in PRIORITY_CHAIN_BUILDERS:
             raise NotImplementedError(f"no builder registered for priority_chains.{name!r}")
         out[name] = PRIORITY_CHAIN_BUILDERS[name](entry, palette)
@@ -293,6 +308,21 @@ if __name__ == "__main__":
          by_id["bvmap-道路中心線ZL4-10高速"]),
         ("standalone bvmap-鉄道中心線ZL4-10", standalone["bvmap-鉄道中心線ZL4-10"],
          by_id["bvmap-鉄道中心線ZL4-10"]),
+        ("rail_tunnel_kukuri_color", categories["rail_tunnel_kukuri_color"],
+         by_id["bvmap-鉄道中心線地下トンネルククリ"]["paint"]["line-color"]),
+        ("rail_tunnel_main_color", chains["rail_tunnel_main_color"],
+         by_id["bvmap-鉄道中心線地下トンネル"]["paint"]["line-color"]),
+        ("railtr_surface_color", categories["railtr_surface_color"],
+         by_id["bvmap-軌道の中心線"]["paint"]["line-color"]),
+        ("railtr_tunnel_color", categories["railtr_tunnel_color"],
+         by_id["bvmap-軌道の中心線トンネル"]["paint"]["line-color"]),
+        ("standalone bvmap-鉄道中心線地下トンネルククリ",
+         standalone["bvmap-鉄道中心線地下トンネルククリ"], by_id["bvmap-鉄道中心線地下トンネルククリ"]),
+        ("standalone bvmap-鉄道中心線地下トンネル",
+         standalone["bvmap-鉄道中心線地下トンネル"], by_id["bvmap-鉄道中心線地下トンネル"]),
+        ("standalone bvmap-軌道の中心線", standalone["bvmap-軌道の中心線"], by_id["bvmap-軌道の中心線"]),
+        ("standalone bvmap-軌道の中心線トンネル",
+         standalone["bvmap-軌道の中心線トンネル"], by_id["bvmap-軌道の中心線トンネル"]),
     ]
 
     mismatches = [name for name, generated, original in checks
