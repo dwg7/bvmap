@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.css">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, sans-serif; }
-  #map { position: absolute; inset: 0; }
+  .map { position: absolute; inset: 0; }
+  .map.inactive { visibility: hidden; pointer-events: none; }
+  #build { font-size: 10px; color: #999; margin-top: 6px; }
   .panel {
     position: absolute;
     z-index: 10;
@@ -44,7 +46,7 @@
 </style>
 </head>
 <body>
-<div id="map"></div>
+<div id="maps"></div>
 <div class="panel" id="control-panel">
   <button data-style="https://stars.optgeo.org/style/bvmap-dark" aria-pressed="false">bvmap-dark</button>
   <button data-style="https://stars.optgeo.org/style/bvmap-starlight" aria-pressed="true">bvmap-starlight</button>
@@ -52,6 +54,7 @@
   <button data-goto="141.36108,43.061529,16">札幌駅バスセンター前</button>
   <button data-goto="135.686737,34.905273,16">大山崎(寺院卍・老人ホーム記号)</button>
   <button data-goto="135.7727,34.9671,17">伏見稲荷(神社記号)</button>
+  <div id="build"></div>
 </div>
 <script type="module">
 // stars.optgeo.org本番配信を直接見るための確認用ページ(examples/style-preview.html
@@ -60,42 +63,83 @@
 // にくいため、実際にアイコン・注記が描画される地点をボタンで用意した。
 import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.mjs";
 
-  const map = new MapLibreMap({
-    container: "map",
-    style: "https://stars.optgeo.org/style/bvmap-starlight",
-    center: [141.36108, 43.061529], // 札幌
-    zoom: 16,
-    hash: true,
-  });
-  map.addControl(new NavigationControl());
-  window.__map = map; // debugging aid
-
-  let currentStyleURL = "https://stars.optgeo.org/style/bvmap-starlight";
+  // 切り替え方式: dark/starlightの2枚の地図を最初に1回ずつ読み込み、ボタンでは
+  // 表示/非表示を切り替えるだけにする(setStyle()を使わない)。setStyle()の内部状態や
+  // 読み込みの競合に左右されず、切り替えは即時。視点は表示中の地図から他方へ同期する。
+  // (経緯: docs/decisions/0042、setStyleの診断・修正を3回試した末の方式)
+  const BUILD = "2026-10-07 two-maps";
+  const INITIAL = "https://stars.optgeo.org/style/bvmap-starlight";
+  const DEFAULT_CAMERA = { center: [141.36108, 43.061529], zoom: 16 }; // 札幌
 
   const panel = document.getElementById("control-panel");
+  const holder = document.getElementById("maps");
+
+  const m = location.hash.match(/^#(-?[\d.]+)\/(-?[\d.]+)\/(-?[\d.]+)/);
+  const camera0 = m ? { zoom: +m[1], center: [+m[3], +m[2]] } : DEFAULT_CAMERA;
+
+  const entries = [...panel.querySelectorAll("button[data-style]")].map((btn) => {
+    const el = document.createElement("div");
+    el.className = "map inactive";
+    holder.appendChild(el);
+    const map = new MapLibreMap({ container: el, style: btn.dataset.style, ...camera0 });
+    map.addControl(new NavigationControl());
+    return { btn, el, map };
+  });
+
+  let active = entries.find((e) => e.btn.dataset.style === INITIAL);
+  Object.defineProperty(window, "__map", { get: () => active.map }); // debugging aid
+  document.getElementById("build").textContent = "build " + BUILD;
+
+  function cameraOf(map) {
+    return { center: map.getCenter(), zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
+  }
+
+  function writeHash() {
+    const c = active.map.getCenter();
+    history.replaceState(null, "", `#${active.map.getZoom().toFixed(2)}/${c.lat.toFixed(6)}/${c.lng.toFixed(6)}`);
+  }
+
+  for (const entry of entries) {
+    entry.map.on("move", () => {
+      if (entry !== active) return;
+      const cam = cameraOf(entry.map);
+      for (const other of entries) if (other !== entry) other.map.jumpTo(cam);
+    });
+    entry.map.on("moveend", () => { if (entry === active) writeHash(); });
+  }
+
+  // flyTo中に切り替えても飛行を新しい地図へ引き継ぐ(遠距離は7秒ほどかかる)。
+  let flight = null;
+  for (const entry of entries) entry.map.on("moveend", () => { if (entry === active) flight = null; });
+
+  function activate(entry) {
+    const cam = cameraOf(active.map);
+    const pending = flight;
+    if (active.map.isMoving()) active.map.stop();
+    active = entry;
+    entry.map.jumpTo(cam);
+    if (pending) { flight = pending; entry.map.flyTo(pending); }
+    for (const e of entries) {
+      e.el.classList.toggle("inactive", e !== entry);
+      e.btn.setAttribute("aria-pressed", String(e === entry));
+    }
+    entry.map.resize();
+    writeHash();
+  }
+  activate(active);
+
   panel.addEventListener("click", (e) => {
-    const styleBtn = e.target.closest("button[data-style]");
-    if (styleBtn) {
-      const url = styleBtn.dataset.style;
-      if (url === currentStyleURL) return;
-      // diff:false forces a full style replacement — see
-      // examples/style-preview.html for why (bvmap-dark/bvmap-starlight
-      // share identical layer ids/order, so MapLibre's default diff:true
-      // path tries a fine-grained update that doesn't reliably pick up
-      // style-wide changes like sprite/glyphs) and for two heavier
-      // alternatives (a re-entrancy flag, recreating the whole Map
-      // instance) that were tried and reverted for their own failure modes.
-      map.setStyle(url, { diff: false });
-      currentStyleURL = url;
-      for (const b of panel.querySelectorAll("button[data-style]")) {
-        b.setAttribute("aria-pressed", String(b === styleBtn));
-      }
+    const btn = e.target.closest("button[data-style]");
+    if (btn) {
+      const entry = entries.find((x) => x.btn === btn);
+      if (entry !== active) activate(entry);
       return;
     }
     const gotoBtn = e.target.closest("button[data-goto]");
     if (gotoBtn) {
       const [lng, lat, zoom] = gotoBtn.dataset.goto.split(",").map(Number);
-      map.flyTo({ center: [lng, lat], zoom });
+      flight = { center: [lng, lat], zoom };
+      active.map.flyTo(flight);
     }
   });
 </script>

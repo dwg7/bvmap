@@ -7,7 +7,9 @@
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.css">
 <style>
   html, body { margin: 0; padding: 0; height: 100%; font-family: system-ui, sans-serif; }
-  #map { position: absolute; inset: 0; }
+  .map { position: absolute; inset: 0; }
+  .map.inactive { visibility: hidden; pointer-events: none; }
+  #build { font-size: 10px; color: #999; margin-top: 6px; }
   .panel {
     position: absolute;
     z-index: 10;
@@ -39,10 +41,11 @@
 </style>
 </head>
 <body>
-<div id="map"></div>
+<div id="maps"></div>
 <div class="panel" id="style-panel">
   <button data-style="../style/bvmap-dark.json" aria-pressed="true">bvmap-dark</button>
   <button data-style="../style/bvmap-starlight.json" aria-pressed="false">bvmap-starlight</button>
+  <div id="build"></div>
 </div>
 <script type="module">
 // zukaku (docs/index.html) と同じCDN参照。CDNからのスクリプト読み込みが
@@ -51,46 +54,72 @@
 // 差し替えるとよい(vendor/はgitignore対象)。
 import { Map as MapLibreMap, NavigationControl } from "https://unpkg.com/maplibre-gl@6.6.0/dist/maplibre-gl.mjs";
 
-  const map = new MapLibreMap({
-    container: "map",
-    style: "../style/bvmap-dark.json",
-    center: [141.36108, 43.061529], // 札幌
-    zoom: 16,
-    hash: true,
-  });
-  map.addControl(new NavigationControl());
-  window.__map = map; // debugging aid
-
-  let currentStyleURL = "../style/bvmap-dark.json";
+  // 切り替え方式: dark/starlightの2枚の地図を最初に1回ずつ読み込み、ボタンでは
+  // 表示/非表示を切り替えるだけにする(setStyle()を使わない)。setStyle()の内部状態や
+  // 読み込みの競合に左右されず、切り替えは即時。視点は表示中の地図から他方へ同期する。
+  // (経緯: docs/decisions/0042、setStyleの診断・修正を3回試した末の方式)
+  const BUILD = "2026-10-07 two-maps";
+  const INITIAL = "../style/bvmap-dark.json";
+  const DEFAULT_CAMERA = { center: [141.36108, 43.061529], zoom: 16 }; // 札幌
 
   const panel = document.getElementById("style-panel");
+  const holder = document.getElementById("maps");
+
+  const m = location.hash.match(/^#(-?[\d.]+)\/(-?[\d.]+)\/(-?[\d.]+)/);
+  const camera0 = m ? { zoom: +m[1], center: [+m[3], +m[2]] } : DEFAULT_CAMERA;
+
+  const entries = [...panel.querySelectorAll("button[data-style]")].map((btn) => {
+    const el = document.createElement("div");
+    el.className = "map inactive";
+    holder.appendChild(el);
+    const map = new MapLibreMap({ container: el, style: btn.dataset.style, ...camera0 });
+    map.addControl(new NavigationControl());
+    return { btn, el, map };
+  });
+
+  let active = entries.find((e) => e.btn.dataset.style === INITIAL);
+  Object.defineProperty(window, "__map", { get: () => active.map }); // debugging aid
+  document.getElementById("build").textContent = "build " + BUILD;
+
+  function cameraOf(map) {
+    return { center: map.getCenter(), zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
+  }
+
+  function writeHash() {
+    const c = active.map.getCenter();
+    history.replaceState(null, "", `#${active.map.getZoom().toFixed(2)}/${c.lat.toFixed(6)}/${c.lng.toFixed(6)}`);
+  }
+
+  for (const entry of entries) {
+    entry.map.on("move", () => {
+      if (entry !== active) return;
+      const cam = cameraOf(entry.map);
+      for (const other of entries) if (other !== entry) other.map.jumpTo(cam);
+    });
+    entry.map.on("moveend", () => { if (entry === active) writeHash(); });
+  }
+
+  function activate(entry) {
+    const cam = cameraOf(active.map);
+    active = entry;
+    entry.map.jumpTo(cam);
+    for (const e of entries) {
+      e.el.classList.toggle("inactive", e !== entry);
+      e.btn.setAttribute("aria-pressed", String(e === entry));
+    }
+    entry.map.resize();
+    writeHash();
+  }
+  activate(active);
+
   panel.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-style]");
-    if (!btn) return;
-    const url = btn.dataset.style;
-    if (url === currentStyleURL) return;
-    // diff:false forces a full style replacement. bvmap-dark.json/
-    // bvmap-starlight.json share the same 123 layer ids/order by design
-    // (the generator's structural gate), and MapLibre's default diff:true
-    // path tries a fine-grained update instead of a full teardown for that
-    // case — worth avoiding since it touches style-wide properties
-    // (sprite, glyphs), not just per-layer paint.
-    //
-    // Two heavier alternatives were tried and reverted: (1) diff:false
-    // plus a "switching" flag gated on the new style's "idle" event, which
-    // gets stuck true forever if "idle" never fires — every later click
-    // silently does nothing; (2) tearing down and recreating the whole Map
-    // (and its WebGL context) on every switch, which sidesteps MapLibre's
-    // internal setStyle state entirely but risks exhausting the browser's
-    // WebGL context budget after many switches in one session (observed
-    // during testing: the map stopped rendering until a full page reload).
-    // Plain setStyle(url, {diff:false}) with no extra state is the
-    // smallest change with the fewest new failure modes.
-    map.setStyle(url, { diff: false });
-    currentStyleURL = url;
-    for (const b of panel.querySelectorAll("button")) {
-      b.setAttribute("aria-pressed", String(b === btn));
+    if (btn) {
+      const entry = entries.find((x) => x.btn === btn);
+      if (entry !== active) activate(entry);
+      return;
     }
+
   });
 </script>
 </body>
