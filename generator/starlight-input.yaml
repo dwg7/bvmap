@@ -691,3 +691,13 @@ hosting:
   font_names:
     "NotoSansJP-Regular": "Noto Sans JP Regular"
     "NotoSerifJP-SemiBold": "Noto Serif JP SemiBold"
+
+# bvmap-darkのlayoutプロパティをid指定で上書きする(bvmap-dark.json自体は無加工のまま)。
+# 縦書き注記のうち「ー」「（）」等の縦書き字形が崩れるもの(0004: MapLibre本体の
+# 縦書きvert字形対応待ち)を、縦書き自体をやめて横書きに読みかえる実験(0041)。
+# 縦層は横層とtext-writing-mode以外のlayoutが同一で、振り分けはvt_arrng(2,4=縦)のみ。
+layout_overrides:
+  bvmap-注記シンボルなし縦ソート順100以上:
+    text-writing-mode: ["horizontal"]
+  bvmap-注記シンボルなし縦ソート順100未満:
+    text-writing-mode: ["horizontal"]

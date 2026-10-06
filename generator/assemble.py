@@ -210,6 +210,15 @@ if __name__ == "__main__":
             output_style["sources"] = json.loads(json.dumps(output_style["sources"]))
             output_style["sources"]["bvmap"]["attribution"] = hosting["source_attribution"]
 
+        # layout_overrides: (docs/decisions/0041) id-addressed layout property
+        # overrides applied last, over whatever the generated/patched layer had.
+        # Layers are deep copies by now (build_* never mutate by_id), so in-place is safe.
+        layer_by_id = {l["id"]: l for l in output_style["layers"]}
+        for lid, props in config.get("layout_overrides", {}).items():
+            if lid not in layer_by_id:
+                raise KeyError(f"layout_overrides: unknown layer id {lid!r}")
+            layer_by_id[lid].setdefault("layout", {}).update(props)
+
         # A style's glyphs endpoint is style-wide — if we're switching it,
         # every layer's layout.text-font literal has to resolve against the
         # new host, not just the ones categories.anno_text_font generates.
