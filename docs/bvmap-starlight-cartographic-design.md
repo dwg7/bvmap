@@ -6,7 +6,7 @@
 
 `bvmap-starlight` は、国土地理院(GSI)の最適化ベクトルタイル(`optimal_bvmap`)向けスタイル `bvmap-dark` を基点にした MapLibre GL JS スタイルである。`bvmap-dark` は `stars.optgeo.org/style/bvmap-dark` として配信されており、その正本は [`hfu/stars`](https://github.com/hfu/stars) の `styles/` ディレクトリにある(Martin tileserver の `config/martin.yaml` が `styles.paths` として直接参照している、[0006](decisions/0006-hfu-stars-is-already-master-repo.md))。本リポジトリ `dwg7/bvmap` はその配信リポジトリではなく、スタイルの**開発・検証ワークスペース**であり、`style/bvmap-dark.json` はある時点のスナップショット(123レイヤー、無加工)、`style/bvmap-starlight.json` はジェネレータの出力である。完成した `bvmap-starlight` は `hfu/stars/styles/` へ PR として反映する(未着手)。
 
-名前の由来は単純で、`bvmap-dark` という識別子に反して実際の見た目は「明るいクリーム地に淡い銀灰色の道路」だった。この実態に近い Apple の製品色名 Starlight を採り、「低彩度・明るめ・銀灰色寄り」へ**一貫性を持って磨き上げる**ことを唯一の目標に据えた([0003](decisions/0003-bvmap-starlight-naming.md)、[0005](decisions/0005-goal-change-master-repo-and-starlight-polish.md))。当初の発端だった縦書き注記の棒音符「ー」問題は、MapLibre 本体のローカルグリフ描画(Canvas 2D の `fillText`)に `font-feature-settings` を渡す経路が無いため userland では解決不能と判明し、目標から外した([0004](decisions/0004-vertical-choonpu-workaround-does-not-work.md))。
+名前の由来は単純で、`bvmap-dark` という識別子に反して実際の見た目は「明るいクリーム地に淡い銀灰色の道路」だった。この実態に近い Apple の製品色名 Starlight を採り、「低彩度・明るめ・銀灰色寄り」へ**一貫性を持って磨き上げる**ことを唯一の目標に据えた([0003](decisions/0003-bvmap-starlight-naming.md)、[0005](decisions/0005-goal-change-master-repo-and-starlight-polish.md))。当初の発端だった縦書き注記の棒音符「ー」問題は、MapLibre 本体のローカルグリフ描画(Canvas 2D の `fillText`)に `font-feature-settings` を渡す経路が無いため userland では解決不能と判明し、目標から外した([0004](decisions/0004-vertical-choonpu-workaround-does-not-work.md))。のちに、縦書きそのものを手放して横書きに改める道を選んでいる(第6節、[0041](decisions/0041-horizontal-writing-experiment.md))。
 
 重要なのは、この作業が「配色を変える」以前に「**GSI が `bvmap-dark` に何を設計として埋め込んだのかを読み解く**」作業になったことである。123レイヤーの style.json は、地物コード表・レイヤー順序・色の対応表・ズーム帯ごとの切り替えという形で、紙地図以来の図式の判断をかなり忠実に含んでいた。それを言語化してジェネレータの入力(`starlight-input.yaml`)に落とし、色だけを差し替えられる形にした——これが本文書の主題である。
 
@@ -262,6 +262,12 @@ def cool_transform(r, g, b, cool=2.2):
 | `gray_161`(等高線) | 161,161,161 | 168,169,172 |
 
 設計上の要点は3つある。(1) `black`・`transparent`・`gray_255` は据え置き——黒は注記のコントラスト、白は背景の清潔さを守る。(2) 明度100未満の値(注記の重要度ランプ)は3%、100以上(道路・建物)は9%と**非対称に明るくする**——暗い文字色を大きく明るくすると可読性を損なうため。変換後もランプ 29〜98 の相対順序が保たれることを検証した。(3) 寒色シフトは R−1.3/B+2.2 程度の、色相変化としてはほぼ気づかない「質感」の変化に留めた。「明るめ・銀灰色寄り」を派手な着色ではなく階調の保存と微弱なティントで実現する、というのが Starlight の色の定義である。移行で新設するトークンにもこの変換を最初から適用し、変換済みと未変換の値が混在しないようにしている([0033](decisions/0033-new-token-policy.md))。
+
+### 変えたもの — 縦書きから横書きへ
+
+地形図図式は、自然地形の名称などに縦書きを用いる。`bvmap-dark` もこれを受け継ぎ、注記を縦書き層と横書き層に分けて持つ(振り分けは `vt_arrng`、2・4 が縦)。標本として復号したタイル16枚では、注記1,708件のうち156件(約9%)が縦書きで、そのうち9件が長音符「ー」を、57件が全角括弧や中黒を含んでいた。
+
+MapLibre GL JS は、縦書きにおけるこれらの字形(長音符の縦棒、括弧の向き)を現在のところ正しく扱えない([0004](decisions/0004-vertical-choonpu-workaround-does-not-work.md))。そこで Starlight は、縦書きの慣習を手放し、該当する2層を横書きで表示することにした。崩れた縦書きを届けるよりも、端正な横書きを届けるほうが読み手に誠実だと考えたためである。層構成は変えておらず、`layout_overrides` を外せば縦書きへ戻る。名古屋・大阪など密集地6地点で、注記の脱落や重なりが増えないことも確かめた([0041](decisions/0041-horizontal-writing-experiment.md))。MapLibre 本体の対応が整う日には、あらためて縦書きを迎え入れたい。
 
 ## 7. YAML から style.json へ(仕組みの概略)
 
