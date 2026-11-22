@@ -90,6 +90,7 @@ dwg7/bvmap/
 ├── style/
 │   ├── bvmap-dark.json                # stars.optgeo.org配信版のスナップショット、無加工
 │   ├── bvmap-starlight.json           # generator/assemble.pyが書き出す生成結果(手動編集しない)
+│   ├── bvmap-nightsky.json            # 暗色版(assemble.py nightsky、0043)。試作、hfu/starsへは未反映
 │   └── bvmap-starlight.md             # bvmap-starlightの説明
 ├── generator/
 │   ├── starlight-input.yaml           # ジェネレーターの入力(palette・categories・
@@ -102,7 +103,9 @@ dwg7/bvmap/
 │   │                                   # 優先順位付きcase連鎖等、flat_matchでは表現できない構造
 │   ├── building_color.py              # 検証用(実運用はcategory_table.py経由)
 │   ├── cool_transform.py              # Starlightの配色変換式(0030)の実コード版
-│   └── sprite_grayscale.py            # スプライトのグレースケール化(0036)
+│   ├── sprite_grayscale.py            # スプライトのグレースケール化(0036)
+│   ├── night_transform.py             # 暗色版パレットの導出式(明るさ反転、0043)
+│   └── sprite_nightsky.py             # 暗色版スプライト(明暗反転、0043)
 ├── sprite/
 │   ├── std.png / std.json (+@2x)      # GSIオリジナルのスナップショット、無加工
 │   └── bvmap-starlight.png / .json (+@2x)  # sprite_grayscale.pyの生成結果

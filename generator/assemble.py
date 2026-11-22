@@ -22,13 +22,15 @@ style/bvmap-dark.json's content; only an id/order mismatch is still
 treated as a hard structural failure (see __main__ below).
 """
 import json
+import sys
 
 from tier_template import extract_templates, generate_tier_block, KNOWN_TIER4_ANOMALIES
 from category_table import SHARED_TEXT_COLOR_LAYERS
 from load_input import (
     load, build_categories, build_priority_chains, build_patches, build_standalone_layers,
-    remap_font_names,
+    remap_font_names, tokenize_literal_colors, resolve_palette_refs,
 )
+from night_transform import transform_tree
 
 # 7 of the 9 Anno layers share the text-font water/coastal split — 2 more
 # than share text-color (docs/decisions/0017's unresolved let-wrapped
@@ -121,12 +123,34 @@ def build_anno_block(anno_ids, by_id, categories, chains):
 
 
 if __name__ == "__main__":
+    # Usage (from the repo root): python3 generator/assemble.py [nightsky]
+    # No argument = Starlight -> style/bvmap-starlight.json (unchanged behavior).
+    # "nightsky" = the second palette (docs/decisions/0043) -> style/bvmap-nightsky.json.
+    variant = sys.argv[1] if len(sys.argv) > 1 else None
+    out_path = f"style/bvmap-{variant or 'starlight'}.json"
+
     with open("style/bvmap-dark.json") as f:
         style = json.load(f)
     layers = style["layers"]
-    by_id = {l["id"]: l for l in layers}
 
-    config = load()
+    config = load(variant=variant)
+
+    # literal_color_tokens: (0043) placeholders for literals that became tokens.
+    # Applied to a deep copy of the raw layers, before any variant transform.
+    raw_layers = json.loads(json.dumps(layers))
+    for l in raw_layers:
+        spec = config.get("literal_color_tokens", {}).get(l["id"])
+        if spec:
+            tokenize_literal_colors(l, spec)
+
+    # Variant literal fallback (0043): every color still written as a literal in
+    # a layer (not a palette token — tier casings, rail, hydro lines, ...) goes
+    # through night_transform, the same function the night palette was derived
+    # from, so literals and tokens stay in one lightness order. The raw layers
+    # are what every builder below reads, so this is a single point of change.
+    if variant == "nightsky":
+        raw_layers = transform_tree(raw_layers)
+    by_id = {l["id"]: l for l in raw_layers}
     categories = build_categories(config)
     chains = build_priority_chains(config, categories)
     patches, patched_ids = build_patches(config, by_id)
@@ -158,6 +182,7 @@ if __name__ == "__main__":
     assert len(assembled_by_id) == len(layers), (len(assembled_by_id), len(layers))
 
     assembled = [assembled_by_id[l["id"]] for l in layers]
+    assembled = resolve_palette_refs(assembled, config["palette"])
 
     # id/order mismatches are always a real bug (assembled_by_id is keyed
     # by the *original* ids, so this should be structurally impossible —
@@ -186,8 +211,11 @@ if __name__ == "__main__":
         print(f"STRUCTURAL FAIL: {len(id_order_problems)} layer(s) assembled out of order "
               f"or with a mismatched id — this should be impossible: {id_order_problems[:5]}")
     else:
-        with open("style/bvmap-starlight.json") as f:
-            current_starlight_name = json.load(f)["name"]
+        try:
+            with open(out_path) as f:
+                current_starlight_name = json.load(f)["name"]
+        except FileNotFoundError:  # first run of a new variant
+            current_starlight_name = config["variants"][variant]["name"]
 
         output_style = dict(style)
         output_style["layers"] = assembled
@@ -229,12 +257,12 @@ if __name__ == "__main__":
                 if tf is not None:
                     layer["layout"]["text-font"] = remap_font_names(tf, font_names)
 
-        with open("style/bvmap-starlight.json", "w") as f:
+        with open(out_path, "w") as f:
             json.dump(output_style, f, ensure_ascii=False, indent=1)
             f.write("\n")
 
         print(
-            f"Wrote style/bvmap-starlight.json — {len(assembled)} layers, structurally sound "
+            f"Wrote {out_path} — {len(assembled)} layers, structurally sound "
             f"(ids/order match bvmap-dark.json). {literal_count} literal, "
             f"{len(assembled) - literal_count} generated/YAML-patched. "
             f"{len(content_diffs)} layer(s) differ in content from bvmap-dark.json "
