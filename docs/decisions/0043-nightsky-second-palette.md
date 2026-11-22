@@ -12,7 +12,7 @@ rgb(68,71,67)(無彩色に近い暗いオリーブ灰)。**暗い緑系の汎用
   `python3 generator/assemble.py nightsky` で `style/bvmap-nightsky.json` を生成できる。
   引数なしの `assemble.py` は従来どおり starlight を出し、**`style/bvmap-starlight.json` はバイト単位で無変化**(確認済み)。
 - 機械変換版(dorayaki 案)と比べた差は、手調整した 2 トークン(水・縁取り)が効く 13 層だけ(下表)。
-- **`hfu/stars` への PR・本番反映は行っていない**(hfu さんの確認待ち)。スプライトのホスト URL も未確定。
+- 配信は 2026-11-22 に完了した(下の「配信の経緯」)。試作時点では PR・反映は未実施だった。
 
 ## 設計
 
@@ -64,9 +64,9 @@ LIGHT `#eaedea`、alpha 維持。[0030](0030-starlight-first-color-pass.md)の `
 
 - 全 123 層の個別確認はしていない。確認したのは東京駅・渋谷(zoom 16〜17.3)と日本列島(zoom 5.5)のみ。
   dorayaki のデモ(河津 zoom 20 / 15.2)は機械変換版でのみ見られており、生成版での再確認は dorayaki 側に残る。
-- 道路番号の盾(`bvmap-注記道路番号`)・等高線数値・zoom 4〜8 の陸海境界の細部は未確認。
+- ~~道路番号の盾・等高線数値~~ → 配信後にライブで確認済み(下記)。zoom 4〜8 の陸海境界の細部は、ライブでは未確認(zoom 5.5 のローカル確認のみ)。
 - 建物の塗りは地面より**明るい**(starlight は暗い)。建物を目立たせる/沈ませるかは配色の好みで、手調整余地。
-- スプライトの配信 URL(`https://stars.optgeo.org/sprite/bvmap-nightsky`)は未配信(`hfu/stars` 側の作業、hfu さんの確認後)。
+- ~~スプライトの配信 URL が未配信~~ → 配信済み(下記)。
 - dorayaki 向けの「スプラット向け設定」(20% フェード、データから決めた緑み)を nightsky 本体に入れるかは bvmap の設計判断。今回は DARK/LIGHT を提案書の値のままとした。
 
 ## bvmap-koicha への影響(触っていない・メモのみ)
@@ -77,3 +77,16 @@ LIGHT `#eaedea`、alpha 維持。[0030](0030-starlight-first-color-pass.md)の `
   この `variants` を koicha の生成器が参照する形が筋(タイルは同一、スタイルだけ違う)。
   その場合 koicha の命名規則(D20)は koicha 側が決める。
 - なお `literal_color_tokens` と `halo` の追加で starlight 出力は無変化なので、koicha のスナップショット差分は出ない。
+
+## 配信の経緯(2026-11-22、追記)
+
+1. [dwg7/bvmap#1](https://github.com/dwg7/bvmap/pull/1)(本 ADR の試作)を hfu さんがマージ。固定 commit は `6d74f864e4503ee209febfe7c048fda2ee9f4d6f`。
+2. [hfu/stars#18](https://github.com/hfu/stars/pull/18)(`styles/bvmap-nightsky.json`、`assets/sprites.json` の `bvmap-nightsky`、`config/martin.yaml` の `sprites.paths`)を出し、hfu さんがマージ。
+   `sprites.json` はソースを上記の固定 commit・sha256(json `f5184d39…`、png `a5a4fe23…`)で固定し、改変表示に「グレースケール化・明暗反転」を明記([0038](0038-sprite-modification-attribution.md))。
+3. 本番反映は stars の gatekeeper セッションが、hfu さん本人の承認を得て実施(12:59 JST に Martin 再起動、/health は約 6 秒で 200)。この作業(bvmap 側)は本番に触れていない。
+   `/style/bvmap-nightsky`(123 層)、`/sprite/bvmap-nightsky` と @2x(各 119 アイコン、pixelRatio 1/2)が 200。他スタイルは無変化(48 ソース・10 スタイル・4 sprite)。
+4. スプライト忠実度(stars 側で測定、`assets/sprites.json` の `fidelity` に記録): 上流シート(6d74f864)と配信 PNG を比べ、アルファ不一致 0、完全不透明画素の色不一致 0、半透明の縁でアルファ荷重の色誤差は最大 0.98/255(bvmap-starlight と同じ性質)。配信 PNG の sha256 がシートと一致しないのは、Martin が SVG から組み立て直すため。
+5. ライブのスプライトでの目視(bvmap 側): 河津 zoom 15.2・16.3 で等高線とその数値(200・242・300)と地図記号が暗緑地に読める。東京・新橋 zoom 16 で国道 15 号の盾の数字と記号が明るく表示される。
+
+### 残る未確認
+全 123 層の個別確認、河津 zoom 20(dorayaki のデモ側)、zoom 4〜8 の陸海境界のライブ確認、建物の塗りが地面より明るいことの是非(配色の好み)。

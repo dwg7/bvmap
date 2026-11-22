@@ -90,7 +90,7 @@ dwg7/bvmap/
 ├── style/
 │   ├── bvmap-dark.json                # stars.optgeo.org配信版のスナップショット、無加工
 │   ├── bvmap-starlight.json           # generator/assemble.pyが書き出す生成結果(手動編集しない)
-│   ├── bvmap-nightsky.json            # 暗色版(assemble.py nightsky、0043)。試作、hfu/starsへは未反映
+│   ├── bvmap-nightsky.json            # 暗色版(assemble.py nightsky、0043)。stars.optgeo.orgで配信中
 │   └── bvmap-starlight.md             # bvmap-starlightの説明
 ├── generator/
 │   ├── starlight-input.yaml           # ジェネレーターの入力(palette・categories・
