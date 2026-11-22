@@ -72,6 +72,11 @@ palette:
   gray_99: "rgba(102,104,106,1)"  # 水部表記線line
   gray_35: "rgba(40,42,44,1)"  # 行政区画界線(所属界/市区町村界/都府県界/地方界)4層で共有
   gray_27: "rgba(33,34,36,1)"  # 行政区画界線国の所属界のみ。gray_35と違う理由は未解明のまま([0021](../docs/decisions/0021-patches-by-id-coverage-expansion.md))
+  # 文字の縁取り(text-halo-color)。9層(等高線数値部・等深線数値部+注記7層)で共有。
+  # starlightでは従来の白リテラルと同値(出力は無変化)。独立トークンにしたのは、
+  # 暗色版で「地面より少し暗い」へ手で外したいため(0043)。gray_255(=地面の色)とは
+  # 意味が違う: 縁取りは文字を道路線・建物から浮かせる役で、地面そのものではない。
+  halo: "rgba(255,255,255,1)"
 
 categories:
   building_fill:
@@ -584,7 +589,7 @@ patches:
     known_pattern_pending: false
     color_overrides:
       text-color: gray_161
-      text-halo-color: gray_255
+      text-halo-color: halo
 
   - id: bvmap-等深線数値部
     base: {source: style/bvmap-dark.json, layer: bvmap-等深線数値部}
@@ -594,7 +599,7 @@ patches:
     known_pattern_pending: false
     color_overrides:
       text-color: gray_88
-      text-halo-color: gray_255
+      text-halo-color: halo
 
   # 以下9層は、旧LITERAL_RANGES(位置ベース選択)にいた層をid参照に
   # 移した([0032](../docs/decisions/0032-literal-layers-generator-migration-plan.md)/
@@ -701,3 +706,67 @@ layout_overrides:
     text-writing-mode: ["horizontal"]
   bvmap-注記シンボルなし縦ソート順100未満:
     text-writing-mode: ["horizontal"]
+
+# 文字の縁取りなど、bvmap-dark.jsonでリテラルのままの色にトークンを付ける
+# (0043)。層id -> プロパティ -> {生の色文字列: トークン名}。式(step/match)の
+# 内側にある色文字列も、式の構造(GSIのまま)を保ったまま置換する。
+# 全パレット共通(starlightの出力は無変化)。ここに書かれていない色リテラルは、
+# 暗色版では night_transform(パレット導出と同じ式)を通る=literal fallback。
+literal_color_tokens:
+  bvmap-注記シンボル付きソート順100以上:   {text-halo-color: {"rgba(255,255,255,1)": halo}}
+  bvmap-注記シンボルなし縦ソート順100以上: {text-halo-color: {"rgba(255,255,255,1)": halo}}
+  bvmap-注記シンボルなし横ソート順100以上: {text-halo-color: {"rgba(255,255,255,1)": halo}}
+  bvmap-注記角度付き線:                    {text-halo-color: {"rgba(255,255,255,1)": halo}}
+  bvmap-注記シンボル付きソート順100未満:   {text-halo-color: {"rgba(255,255,255,1)": halo}}
+  bvmap-注記シンボルなし縦ソート順100未満: {text-halo-color: {"rgba(255,255,255,1)": halo}}
+  bvmap-注記シンボルなし横ソート順100未満: {text-halo-color: {"rgba(255,255,255,1)": halo}}
+
+# 第2パレット(0043)。`python3 generator/assemble.py nightsky` で
+# style/bvmap-nightsky.json を出す。パレットは上の`palette:`と**全く同じトークン名**
+# を持たなければならない(load_input.load()が過不足を検査する)。トークン名は
+# starlight側の値の名残(gray_255は暗色版では暗緑)——名前は識別子であり明るさでは
+# ない。導出: night_transform.py(明るさ反転 + 緑み、DARK #2f3a30 / LIGHT #eaedea、
+# 出典: dorayaki側の提案書)で全トークンを一度機械変換し、下記の手調整だけを
+# 上書きした。手調整の一覧は `python3 generator/night_transform.py` で式との差分として
+# いつでも出せる。
+variants:
+  nightsky:
+    name: "GSI optimized vector tile basemap (bvmap-nightsky), dark companion of bvmap-starlight"
+    palette:
+      gray_100: "rgba(150,157,151,1)"  # 式: rgba(113,114,116,1)
+      gray_157: "rgba(112,120,113,1)"  # 式: rgba(164,166,168,1)
+      gray_160: "rgba(110,118,111,1)"  # 式: rgba(167,169,171,1)
+      gray_226: "rgba(66,76,67,1)"  # 式: rgba(227,229,231,1)
+      gray_173: "rgba(102,110,102,1)"  # 式: rgba(179,180,183,1)
+      gray_200: "rgba(83,93,84,1)"  # 式: rgba(204,205,207,1)
+      gray_255: "rgba(47,58,48,1)"  # 式: rgba(255,255,255,1)
+      gray_233: "rgba(61,72,62,1)"  # 式: rgba(234,235,237,1)
+      gray_203: "rgba(81,91,82,1)"  # 式: rgba(206,208,210,1)
+      gray_152: "rgba(116,124,116,1)"  # 式: rgba(160,161,163,1)
+      gray_164: "rgba(108,116,108,1)"  # 式: rgba(171,172,174,1)
+      gray_209: "rgba(30,40,43,1)"  # 手調整。水: 式だと地面(gray_255)より明るくなる→地面より暗く少し青みへ。背景のzoom4-8(海)・水域塗り・河川線(zoom<16)で共有
+      transparent: "rgba(0,0,0,0)"  # 式の対象外(alphaが0のものは変えない)
+      anno_29: "rgba(208,212,208,1)"  # 式: rgba(34,36,38,1)
+      anno_98: "rgba(158,165,159,1)"  # 式: rgba(101,103,105,1)
+      anno_70: "rgba(178,184,179,1)"  # 式: rgba(74,76,78,1)
+      anno_68: "rgba(180,185,180,1)"  # 式: rgba(72,74,76,1)
+      anno_80: "rgba(171,177,172,1)"  # 式: rgba(84,85,87,1)
+      anno_42: "rgba(198,203,199,1)"  # 式: rgba(47,48,51,1)
+      anno_59: "rgba(186,191,186,1)"  # 式: rgba(64,65,67,1)
+      anno_50: "rgba(193,197,193,1)"  # 式: rgba(55,56,58,1)
+      black: "rgba(234,237,234,1)"  # 式: rgba(0,0,0,1)
+      gray_88: "rgba(166,171,166,1)"  # 式: rgba(92,93,95,1)
+      gray_161: "rgba(110,118,110,1)"  # 式: rgba(168,169,172,1)
+      gray_113: "rgba(142,149,142,1)"  # 式: rgba(124,126,128,1)
+      gray_30: "rgba(207,211,207,1)"  # 式: rgba(35,37,39,1)
+      gray_88_hydro: "rgba(166,171,166,1)"  # 式: rgba(92,93,95,1)
+      gray_150: "rgba(117,125,118,1)"  # 式: rgba(158,159,162,1)
+      gray_99: "rgba(158,164,158,1)"  # 式: rgba(102,104,106,1)
+      gray_35: "rgba(203,208,203,1)"  # 式: rgba(40,42,44,1)
+      gray_27: "rgba(209,213,209,1)"  # 式: rgba(33,34,36,1)
+      halo: "rgba(38,48,39,1)"  # 手調整。式だと地面と同色。道路線(地面より明るい)の上でも文字が浮くよう、地面より少し暗く
+    hosting:
+      # スプライトは明暗反転版(generator/sprite_nightsky.py)。配信URLはstars側で
+      # 決まり次第確定(未配信の間このURLは404——試作中は比較ページがローカルへ向ける)。
+      sprite: "https://stars.optgeo.org/sprite/bvmap-nightsky"
+      source_attribution: "国土地理院最適化ベクトルタイル。スプライトアイコンは国土地理院最適化ベクトルタイルの原本を改変(グレースケール化・明暗反転)して使用。改変者: dwg7/bvmap。国土地理院コンテンツ利用規約に基づく。"

@@ -21,9 +21,28 @@ from rail_tunnel_color import compile_main_color as compile_rail_tunnel_main_col
 from anno_symbol_color import compile_symbol_text_color
 
 
-def load(path="generator/starlight-input.yaml"):
+def load(path="generator/starlight-input.yaml", variant=None):
+    """Loads the YAML. variant=None is the Starlight palette (the top-level
+    `palette:`). variant="nightsky" (docs/decisions/0043) swaps in
+    variants.nightsky.palette, which must define exactly the same token
+    names — a missing or extra token raises instead of silently falling
+    back, because a forgotten token would leave one layer in the wrong
+    brightness. variants.<name>.hosting is merged over the top-level
+    hosting: (sprite URL, attribution)."""
     with open(path) as f:
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+    config["variant"] = variant
+    if variant is not None:
+        v = config["variants"][variant]
+        base_tokens, variant_tokens = set(config["palette"]), set(v["palette"])
+        if base_tokens != variant_tokens:
+            raise KeyError(
+                f"variants.{variant}.palette token mismatch — missing: "
+                f"{sorted(base_tokens - variant_tokens)}, extra: {sorted(variant_tokens - base_tokens)}"
+            )
+        config["palette"] = v["palette"]
+        config["hosting"] = {**config.get("hosting", {}), **v.get("hosting", {})}
+    return config
 
 
 def resolve(token, palette):
@@ -234,6 +253,40 @@ def apply_step_outputs(expr, tokens, palette):
     for idx, token in zip(output_indices, tokens):
         new_expr[idx] = resolve(token, palette)
     return new_expr
+
+
+PALETTE_REF_PREFIX = "palette:"
+
+
+def tokenize_literal_colors(layer, spec):
+    """literal_color_tokens: (docs/decisions/0043) replaces a literal color
+    string *inside* a layer property — even deep in a step/match expression —
+    with a placeholder "palette:<token>" that resolve_palette_refs() fills in
+    from whichever palette is active. This is how the 7 halo-bearing Anno
+    layers (whose text-halo-color is a literal white, sometimes inside a
+    zoom/vt_code expression whose structure must stay GSI's) get a token
+    without being rebuilt. Must run on the *raw* bvmap-dark layer, before
+    any variant color transform, so the literal still matches."""
+    def walk(node, mapping):
+        if isinstance(node, str):
+            return PALETTE_REF_PREFIX + mapping[node] if node in mapping else node
+        if isinstance(node, list):
+            return [walk(x, mapping) for x in node]
+        return node
+    for prop, mapping in spec.items():
+        for section in ("paint", "layout"):
+            if prop in layer.get(section, {}):
+                layer[section][prop] = walk(layer[section][prop], mapping)
+
+
+def resolve_palette_refs(node, palette):
+    if isinstance(node, str) and node.startswith(PALETTE_REF_PREFIX):
+        return resolve(node[len(PALETTE_REF_PREFIX):], palette)
+    if isinstance(node, list):
+        return [resolve_palette_refs(x, palette) for x in node]
+    if isinstance(node, dict):
+        return {k: resolve_palette_refs(v, palette) for k, v in node.items()}
+    return node
 
 
 def remap_font_names(node, font_map):

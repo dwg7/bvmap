@@ -58,7 +58,15 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→(全体像
 - **ADRに訂正込みで記録する**: 間違った仮説も消さず、訂正として残す(cafebabeの`verification-discipline.md`にも通じる規律)
 - **AI向けの構造化コメント**: 人間向けの説明文ではなく、将来のAIセッションが情報源を再度漁らずに済む意味メタデータとして書く(`~/.claude/projects/-Users-hfu-bvmap/memory/feedback_ai_consumable_documentation.md`参照)
 
+## 暗色版 bvmap-nightsky(2026-11-22、試作、0043)
+
+dorayaki依頼。`python3 generator/assemble.py nightsky` → `style/bvmap-nightsky.json`、`python3 generator/sprite_nightsky.py` → `sprite/bvmap-nightsky*`。
+設計・判断・未確認事項は[0043](docs/decisions/0043-nightsky-second-palette.md)。**hfu/starsへのPR・本番反映は未実施(hfuさんの確認待ち)**。
+観察は `experiments/nightsky/compare.html`(左右同期)。koichaへの影響はADRにメモのみ。
+
 ## 実験用ファイル(削除・整理は未検討)
+
+- `experiments/nightsky/`: 機械変換版の再現(`mechanical.py`)と比較ページ(0043)
 
 - `examples/style-preview.html`: bvmap-dark/bvmap-starlight比較用
 - `examples/realfont-test.html` + `examples/fixtures/bvmap-dark-realfont-stack.json`: [0007](docs/decisions/0007-real-font-names-bypass-local-restriction.md)の実フォント名検証用
