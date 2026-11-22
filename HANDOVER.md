@@ -58,10 +58,10 @@ compact後の自分自身)は、まず`CLAUDE.md`→本ファイル→(全体像
 - **ADRに訂正込みで記録する**: 間違った仮説も消さず、訂正として残す(cafebabeの`verification-discipline.md`にも通じる規律)
 - **AI向けの構造化コメント**: 人間向けの説明文ではなく、将来のAIセッションが情報源を再度漁らずに済む意味メタデータとして書く(`~/.claude/projects/-Users-hfu-bvmap/memory/feedback_ai_consumable_documentation.md`参照)
 
-## 暗色版 bvmap-nightsky(2026-11-22、試作、0043)
+## 暗色版 bvmap-nightsky(2026-11-22、配信済み、0043)
 
 dorayaki依頼。`python3 generator/assemble.py nightsky` → `style/bvmap-nightsky.json`、`python3 generator/sprite_nightsky.py` → `sprite/bvmap-nightsky*`。
-設計・判断・未確認事項は[0043](docs/decisions/0043-nightsky-second-palette.md)。**hfu/starsへのPR・本番反映は未実施(hfuさんの確認待ち)**。
+設計・判断・未確認事項は[0043](docs/decisions/0043-nightsky-second-palette.md)。**配信済み(2026-11-22、[hfu/stars#18](https://github.com/hfu/stars/pull/18)、`https://stars.optgeo.org/style/bvmap-nightsky`)**。残る未確認は[0043](docs/decisions/0043-nightsky-second-palette.md)末尾。
 観察は `experiments/nightsky/compare.html`(左右同期)。koichaへの影響はADRにメモのみ。
 
 ## 実験用ファイル(削除・整理は未検討)
